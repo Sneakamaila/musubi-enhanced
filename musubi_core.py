@@ -4,8 +4,10 @@ Engineered specifically for Looking Glass Hololuminescent Displays (HLD) & Musub
 
 Key Features & Official HLD Compliance:
 - Depth-Anything-V2 ONNX high-resolution metric depth estimation with Guided Filter edge snapping
-- Subpixel Bicubic DIBR: Eliminates integer pixel snapping and micro-stutter for silky smooth 30 & 60 FPS motion
-- Layered Occlusion Inpainting: Pre-synthesizes background underneath depth cliffs, eliminating silhouette fraying
+- True Layered Occlusion DIBR: Inpaints background plate underneath subjects, completely eliminating
+  foreground stretching, rubber-band smearing, and ghosting artifacts around silhouettes
+- Facial & Subject Rigidity Regularization: Preserves structural solid integrity so faces and bodies do not deform like Jell-O
+- Forward-Projected Alpha Mattes: Prevents disocclusion holes from ever sampling foreground skin/clothes
 - Direct FFmpeg CFR Pipe: Hardware-accurate Constant Frame Rate video encoding (no dropped frames or container jitter)
 - Native HLD Optical Compliance:
   * Pure White (#FFFFFF) background pre-matting (Multiply-blend transparent for physical HLD optics)
@@ -22,7 +24,7 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
-__version__ = "2.2.1"
+__version__ = "2.3.0"
 
 MODEL_URL = "https://huggingface.co/yuvraj108c/Depth-Anything-2-Onnx/resolve/main/depth_anything_v2_vits.onnx"
 
@@ -106,52 +108,49 @@ class Musubi3DConverter:
     def prepare_layers(self, img_bgr, depth, native_alpha=None):
         """
         Decomposes the scene into:
-        1. An inpainted background plate (extends texture underneath depth cliffs).
-        2. A solid foreground subject alpha mask (fully solid, not hollow).
+        1. An inpainted background plate (extends clean background texture underneath foreground silhouettes).
+        2. Inpainted background depth plate.
+        3. A solid foreground subject mask (with zero hollow holes).
+        4. A rigidity-smoothed subject depth map (prevents facial Jell-O distortion).
         """
         h, w = img_bgr.shape[:2]
         
-        # 1. Detect depth cliffs (discontinuity edges) for background plate inpainting
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-        depth_dilated = cv2.dilate(depth, kernel)
-        depth_eroded = cv2.erode(depth, kernel)
-        cliff_diff = depth_dilated - depth_eroded
-        
-        cliff_near = ((depth - depth_eroded) > 0.08) & (cliff_diff > 0.12)
-        cliff_inpaint_mask = cv2.dilate(cliff_near.astype(np.uint8) * 255, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (16, 16)))
-        
-        bg_plate = cv2.inpaint(img_bgr, cliff_inpaint_mask, 5, cv2.INPAINT_TELEA)
-        bg_depth_u8 = cv2.inpaint((depth * 255).astype(np.uint8), cliff_inpaint_mask, 5, cv2.INPAINT_TELEA)
-        bg_depth_plate = bg_depth_u8.astype(np.float32) / 255.0
-        
-        # 2. Solid Foreground Subject Alpha Mask (for 3D hologram mode)
+        # 1. Segment foreground subject
         if native_alpha is not None:
-            # Source image has a native alpha channel (PNG with transparency)
-            subject_alpha = np.clip(native_alpha, 0.0, 1.0).astype(np.float32)
-            has_foreground = True
-            focus_depth = np.float32(np.median(depth[subject_alpha > 0.5])) if np.any(subject_alpha > 0.5) else np.float32(np.median(depth))
+            fg_mask = (np.clip(native_alpha, 0.0, 1.0) * 255).astype(np.uint8)
+            has_foreground = bool(np.any(fg_mask > 128))
         else:
-            # Segment solid foreground subject using OpenCV GrabCut:
             rect = (int(w * 0.04), int(h * 0.04), int(w * 0.92), int(h * 0.92))
             mask = np.zeros((h, w), np.uint8)
             bgdModel = np.zeros((1, 65), np.float64)
             fgdModel = np.zeros((1, 65), np.float64)
             try:
                 cv2.grabCut(img_bgr, mask, rect, bgdModel, fgdModel, 3, cv2.GC_INIT_WITH_RECT)
-                mask2 = np.where((mask == 2) | (mask == 0), 0.0, 1.0).astype(np.float32)
-                has_foreground = bool(np.any(mask2 > 0.5))
-                if has_foreground:
-                    subject_alpha = cv2.GaussianBlur(mask2, (5, 5), 1.0)
-                    focus_depth = np.float32(np.median(depth[mask2 > 0.5]))
-                else:
-                    subject_alpha = np.ones((h, w), dtype=np.float32)
-                    focus_depth = np.float32(np.median(depth))
+                fg_mask = np.where((mask == 2) | (mask == 0), 0, 255).astype(np.uint8)
+                has_foreground = bool(np.any(fg_mask > 128))
             except Exception:
-                subject_alpha = np.ones((h, w), dtype=np.float32)
-                focus_depth = np.float32(np.median(depth))
-                has_foreground = True
+                fg_mask = (depth > 0.5).astype(np.uint8) * 255
+                has_foreground = bool(np.any(fg_mask > 128))
 
-        return bg_plate, bg_depth_plate, subject_alpha, focus_depth, has_foreground
+        if has_foreground:
+            # 2. Inpaint Background Plate behind foreground subjects
+            # Dilate mask by 33 pixels to cover the full parallax displacement range
+            inpaint_mask = cv2.dilate(fg_mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (33, 33)))
+            bg_plate = cv2.inpaint(img_bgr, inpaint_mask, 7, cv2.INPAINT_TELEA)
+            bg_depth_u8 = cv2.inpaint((depth * 255).astype(np.uint8), inpaint_mask, 7, cv2.INPAINT_TELEA)
+            bg_depth = bg_depth_u8.astype(np.float32) / 255.0
+
+            # 3. Regularize subject depth: smooth out intra-subject noise so faces remain rigid and undeformed
+            subject_depth_u8 = (depth * 255).astype(np.uint8)
+            subject_depth = cv2.bilateralFilter(subject_depth_u8, d=15, sigmaColor=35, sigmaSpace=15).astype(np.float32) / 255.0
+            focus_depth = np.float32(np.median(subject_depth[fg_mask > 128]))
+        else:
+            bg_plate = img_bgr.copy()
+            bg_depth = depth.copy()
+            subject_depth = depth.copy()
+            focus_depth = np.float32(np.median(depth))
+
+        return bg_plate, bg_depth, fg_mask, subject_depth, focus_depth, has_foreground
 
     def render_dibr_frame(
         self,
@@ -159,14 +158,14 @@ class Musubi3DConverter:
         depth,
         shift_x=0.0,
         shift_y=0.0,
-        focus_depth=0.7,
+        focus_depth=None,
         max_shift=8.0,
         layers=None
     ):
         """
-        Subpixel Bicubic DIBR Rendering for full images (hld_card, simulated_box, full).
-        Evaluates coordinates continuously at floating-point precision with cv2.remap (INTER_CUBIC).
-        Eliminates integer snapping and guarantees butter-smooth motion at 30 and 60 FPS.
+        Occlusion-Aware Layered DIBR Rendering for full images (hld_card, simulated_box, full).
+        Uses the inpainted background plate underneath the foreground to completely eliminate
+        foreground stretching, rubber-band smearing, and ghosting artifacts.
         """
         h, w = img_bgr.shape[:2]
         grid_y, grid_x = np.indices((h, w), dtype=np.float32)
@@ -174,14 +173,57 @@ class Musubi3DConverter:
         shift_x = np.float32(shift_x)
         shift_y = np.float32(shift_y)
         max_shift = np.float32(max_shift)
-        focus_depth = np.float32(focus_depth if focus_depth is not None else np.median(depth))
         
-        dx = (depth - focus_depth) * max_shift * shift_x
-        dy = (depth - focus_depth) * max_shift * shift_y
-        map_x = (grid_x - dx).astype(np.float32)
-        map_y = (grid_y - dy).astype(np.float32)
+        if layers is None:
+            bg_plate, bg_depth, fg_mask, subject_depth, auto_focus, has_fg = self.prepare_layers(img_bgr, depth)
+            if focus_depth is None:
+                focus_depth = auto_focus
+        else:
+            bg_plate, bg_depth, fg_mask, subject_depth, auto_focus, has_fg = layers
+            if focus_depth is None:
+                focus_depth = auto_focus
+                
+        focus_depth = np.float32(focus_depth)
         
-        warped = cv2.remap(img_bgr, map_x, map_y, cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT_101)
+        if has_fg:
+            # 1. Warp Background Plate with Background Depth
+            dx_bg = (bg_depth - focus_depth) * max_shift * shift_x
+            dy_bg = (bg_depth - focus_depth) * max_shift * shift_y
+            map_x_bg = (grid_x - dx_bg).astype(np.float32)
+            map_y_bg = (grid_y - dy_bg).astype(np.float32)
+            warped_bg = cv2.remap(bg_plate, map_x_bg, map_y_bg, cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT_101)
+            
+            # 2. Forward-project Foreground Alpha to prevent disocclusion holes from sampling foreground
+            dx_fg = (subject_depth - focus_depth) * max_shift * shift_x
+            dy_fg = (subject_depth - focus_depth) * max_shift * shift_y
+            target_x_fg = grid_x + dx_fg
+            target_y_fg = grid_y + dy_fg
+            
+            fg_indices = fg_mask > 128
+            target_alpha = np.zeros((h, w), dtype=np.float32)
+            if np.any(fg_indices):
+                tx = np.clip(np.round(target_x_fg[fg_indices]).astype(int), 0, w - 1)
+                ty = np.clip(np.round(target_y_fg[fg_indices]).astype(int), 0, h - 1)
+                target_alpha[ty, tx] = 1.0
+                target_alpha = cv2.morphologyEx(target_alpha, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
+                target_alpha = cv2.GaussianBlur(target_alpha, (3, 3), 0.5)[:, :, np.newaxis]
+            else:
+                target_alpha = np.ones((h, w, 1), dtype=np.float32)
+                
+            # 3. Warp Foreground with Subpixel Bicubic Remap using smoothed subject depth
+            map_x_fg = (grid_x - dx_fg).astype(np.float32)
+            map_y_fg = (grid_y - dy_fg).astype(np.float32)
+            warped_fg = cv2.remap(img_bgr, map_x_fg, map_y_fg, cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT_101)
+            
+            # 4. Clean Layered Composite
+            warped = (warped_fg * target_alpha + warped_bg * (1.0 - target_alpha)).astype(np.uint8)
+        else:
+            dx = (depth - focus_depth) * max_shift * shift_x
+            dy = (depth - focus_depth) * max_shift * shift_y
+            map_x = (grid_x - dx).astype(np.float32)
+            map_y = (grid_y - dy).astype(np.float32)
+            warped = cv2.remap(img_bgr, map_x, map_y, cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT_101)
+            
         return warped
 
     def render_hld_photo_card(self, warped_photo, target_w, target_h, bg_type="white"):
@@ -242,7 +284,7 @@ class Musubi3DConverter:
         target_h,
         shift_x=0.0,
         shift_y=0.0,
-        focus_depth=0.7,
+        focus_depth=None,
         max_shift=8.0,
         layers=None
     ):
@@ -255,11 +297,11 @@ class Musubi3DConverter:
         grid_y, grid_x = np.indices((h, w), dtype=np.float32)
         
         if layers is None:
-            _, _, subject_alpha, auto_focus, _ = self.prepare_layers(img_bgr, depth)
+            _, _, fg_mask, subject_depth, auto_focus, has_fg = self.prepare_layers(img_bgr, depth)
             if focus_depth is None:
                 focus_depth = auto_focus
         else:
-            _, _, subject_alpha, auto_focus, _ = layers
+            _, _, fg_mask, subject_depth, auto_focus, has_fg = layers
             if focus_depth is None:
                 focus_depth = auto_focus
                 
@@ -268,14 +310,25 @@ class Musubi3DConverter:
         max_shift = np.float32(max_shift)
         focus_depth = np.float32(focus_depth)
         
-        dx_fg = (depth - focus_depth) * max_shift * shift_x
-        dy_fg = (depth - focus_depth) * max_shift * shift_y
+        dx_fg = (subject_depth - focus_depth) * max_shift * shift_x
+        dy_fg = (subject_depth - focus_depth) * max_shift * shift_y
+        target_x_fg = grid_x + dx_fg
+        target_y_fg = grid_y + dy_fg
+        
+        fg_indices = fg_mask > 128
+        target_alpha = np.zeros((h, w), dtype=np.float32)
+        if np.any(fg_indices):
+            tx = np.clip(np.round(target_x_fg[fg_indices]).astype(int), 0, w - 1)
+            ty = np.clip(np.round(target_y_fg[fg_indices]).astype(int), 0, h - 1)
+            target_alpha[ty, tx] = 1.0
+            target_alpha = cv2.morphologyEx(target_alpha, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
+            target_alpha = cv2.GaussianBlur(target_alpha, (3, 3), 0.5)[:, :, np.newaxis]
+        else:
+            target_alpha = np.ones((h, w, 1), dtype=np.float32)
+            
         map_x_fg = (grid_x - dx_fg).astype(np.float32)
         map_y_fg = (grid_y - dy_fg).astype(np.float32)
-        
         warped_fg = cv2.remap(img_bgr, map_x_fg, map_y_fg, cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT_101)
-        warped_alpha = cv2.remap(subject_alpha, map_x_fg, map_y_fg, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        warped_alpha = np.clip(warped_alpha[:, :, np.newaxis], 0.0, 1.0)
         
         # Center subject on canvas
         sub_x0 = (target_w - w) // 2
@@ -295,7 +348,7 @@ class Musubi3DConverter:
         
         roi = canvas[sub_y0:sub_y0+h, sub_x0:sub_x0+w]
         canvas[sub_y0:sub_y0+h, sub_x0:sub_x0+w] = (
-            warped_fg * warped_alpha + roi * (1.0 - warped_alpha)
+            warped_fg * target_alpha + roi * (1.0 - target_alpha)
         ).astype(np.uint8)
         
         return canvas
@@ -359,7 +412,7 @@ class Musubi3DConverter:
 
         depth = self.estimate_depth(base_img)
         layers = self.prepare_layers(base_img, depth, native_alpha=resized_alpha)
-        _, _, _, focus_depth, _ = layers
+        _, _, _, _, focus_depth, _ = layers
         
         total_frames = int(duration * fps)
         os.makedirs(os.path.dirname(os.path.abspath(output_video_path)), exist_ok=True)

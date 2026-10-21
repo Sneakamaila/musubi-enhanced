@@ -20,7 +20,7 @@ os.makedirs(UPLOADS_DIR, exist_ok=True)
 os.makedirs(OUTPUTS_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
-__version__ = "2.2.1"
+__version__ = "2.3.0"
 
 converter = None
 
@@ -43,7 +43,7 @@ async def get_version():
     return {
         "version": f"v{__version__}",
         "app": "Musubi 3D Studio",
-        "engine": "Subpixel Bicubic DIBR v2.2.1 (CFR Pipeline)",
+        "engine": "Layered Occlusion DIBR v2.3.0 (CFR Pipeline)",
         "hld_compliant": True
     }
 
@@ -103,7 +103,7 @@ async def generate_preview(file: UploadFile = File(...)):
 @app.post("/api/render")
 async def render_video(
     file_id: str = Form(...),
-    sway: float = Form(8.0),
+    sway: float = Form(6.0),
     axis: str = Form("x"),
     duration: float = Form(6.0),
     fps: int = Form(30),

@@ -1,6 +1,6 @@
 # Musubi 3D Studio (musubi-enhanced) ❖
 
-[![Version](https://img.shields.io/badge/version-v2.2.1-emerald.svg)](https://github.com/Sneakamaila/musubi-enhanced)
+[![Version](https://img.shields.io/badge/version-v2.3.0-emerald.svg)](https://github.com/Sneakamaila/musubi-enhanced)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
 [![Unraid](https://img.shields.io/badge/Unraid-Compatible-orange.svg)](unraid-musubi-enhanced.xml)
 [![Python](https://img.shields.io/badge/Python-3.11+-green.svg)](https://python.org)
@@ -12,14 +12,18 @@ Entwickelt unter strikter Berücksichtigung der offiziellen [Looking Glass HLD D
 
 ---
 
-## 🔬 Was ist neu in v2.2.1?
+## 🔬 Was ist neu in v2.3.0?
 
-* **Fix für 3D-Hologramm (`hld_subject`):**  
-  Behebt den Bug, bei dem nur der Umriss (Drahtgitter) der Personen gezeichnet wurde. Motive werden nun vollflächig und solide mit Bodenschatten freigestellt.
-* **Nativer Transparenz-Support (PNG mit Alpha-Kanal):**  
-  Bilder mit vorhandener Transparenz (z. B. Sticker, iOS-Freisteller, Blender-Renders, Photoshop) werden nativ 1:1 als schwebende 3D-Hologramme ohne Segmentierungsverlust gerendert.
-* **Empfehlung für Standardfotos:**  
-  Für herkömmliche Fotos bleibt der Modus **`hld_card` (HLD-Fotokarte)** der offizielle, empfohlene Standard, um das gesamte Foto mitsamt Hintergrunddetails harmonisch im Glaskasten schweben zu lassen.
+* **Layered Occlusion DIBR Engine:**  
+  Vollständige Entkopplung von Vorder- und Hintergrund durch automatische Hintergrund-Rekonstruktion (Inpainted Background Plate). Verdeckter Hintergrund hinter Personen (Meer, Himmel, Wände) wird natürlich fortgeführt – kein Ziehharmonika-Verzerren, Ausfransen oder Gummi-Verschmieren an Kanten wie Haaren, Hüten, Ohren oder Schultern mehr!
+* **Facial & Subject Rigidity Regularization:**  
+  Kantenerhaltende Glättung der Tiefenkarte im Motivbereich. Gesichter, Körper und Kleidung behalten ihre feste, solide anatomische Form bei der Kamerabewegung („Anti-Jell-O-Face“).
+* **Forward-Projected Alpha Mattes:**  
+  Präzise Vorwärtsprojektion der Alphamaske verhindert, dass Disokklusions-Löcher fälschlicherweise Vordergrund-Pixel (Haut, Kleidung) abtasten.
+* **Kalibrierte HLD-Parallaxe:**  
+  Parallax-Regler optimal skaliert auf die physikalische HLD-Displaygeometrie (Standard: 6 px / ~1.8°). Klare Empfehlungsbereiche (4–8 px für optimalen 3D-Effekt ohne Augenanstrengung).
+* **Nativer Transparenz-Support:**  
+  PNG-Bilder mit Alphakanal (z. B. iOS-Freisteller, Sticker, 3D-Renders) werden als 100% scharfe 3D-Hologramme ohne Segmentierungsverlust gerendert.
 
 ---
 
@@ -57,7 +61,7 @@ docker compose up -d --build
 
 ---
 
-### Update auf die neueste Version (v2.2.0):
+### Update auf die neueste Version (v2.3.0):
 
 Falls dein lokales Git-Repository auf Unraid abweicht (divergent branches), führe diesen Einzeiler aus:
 

@@ -23,7 +23,7 @@ def main():
         default="hld_card",
         help="Presentation mode: hld_card (Floating card in White Alcove for Musubi), hld_subject (Isolated 3D hologram), simulated_box (for PC preview), full (Legacy 2D Vollbild)"
     )
-    parser.add_argument("--sway", type=float, default=8.0, help="Parallax sway amount (default: 8.0, recommended 6.0-12.0 for HLD)")
+    parser.add_argument("--sway", type=float, default=6.0, help="Parallax sway amount (default: 6.0, recommended 4.0-8.0 for HLD)")
     parser.add_argument("--axis", choices=["x", "circle", "figure8"], default="x", help="Camera motion axis: x (horizontal), circle, figure8")
     parser.add_argument("--duration", type=float, default=6.0, help="Video duration in seconds (default: 6.0, seamless loop)")
     parser.add_argument("--fps", type=int, default=30, help="Framerate in FPS (default: 30)")
