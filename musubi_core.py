@@ -1,12 +1,13 @@
 """
-Musubi 3D Engine - Core Processing Module
+Musubi 3D Engine - Core Processing Module (v2.0 Clean DIBR)
 High-precision 2D to 3D Parallax Video Converter for Looking Glass Musubi
 Features:
 - Depth-Anything-V2 ONNX inference with auto-download
-- Disocclusion Inpainting (eliminates voids and edge tearing)
-- Layered Depth Image-Based Rendering (DIBR)
-- Seamless sinusoidal looping camera trajectories
-- Optimized 9:16 H.264 MP4 export for Looking Glass Musubi
+- Continuous-Depth Forward Warping with Z-Buffering (no destructive layer slicing!)
+- True geometric disocclusion hole detection and background-aware inpainting
+- Multi-plane depth parallax across all scene elements (foreground, midground, background)
+- Harmonic sinusoidal camera trajectories (seamless, jitter-free loops)
+- Optimized 9:16 H.264 MP4 export (576x1024 native / 1080x1920 Full HD)
 """
 
 import os
@@ -28,7 +29,7 @@ def ensure_model_exists(model_path):
     if not os.path.exists(model_path):
         os.makedirs(os.path.dirname(os.path.abspath(model_path)), exist_ok=True)
         print(f"Model not found locally at {model_path}.")
-        print(f"Downloading Depth-Anything-V2 ONNX model from Hugging Face...")
+        print("Downloading Depth-Anything-V2 ONNX model from Hugging Face...")
         urllib.request.urlretrieve(MODEL_URL, model_path, reporthook=download_progress)
         print("\nModel downloaded successfully!")
 
@@ -63,53 +64,73 @@ class Musubi3DConverter:
         d_min, d_max = depth_out.min(), depth_out.max()
         depth = (depth_out - d_min) / (d_max - d_min + 1e-8)
         depth = cv2.resize(depth, (w, h), interpolation=cv2.INTER_LINEAR)
+        
+        # Edge-preserving bilateral filter to suppress depth noise while keeping sharp edges
+        depth_u8 = (depth * 255).astype(np.uint8)
+        depth_filtered = cv2.bilateralFilter(depth_u8, d=5, sigmaColor=30, sigmaSpace=5)
+        depth = depth_filtered.astype(np.float32) / 255.0
+        
         return depth
 
-    def prepare_layers(self, img_bgr, depth, max_shift=16):
+    def render_dibr_frame(self, img_bgr, depth, shift_x, shift_y=0.0, focus_depth=0.65, max_shift=14.0):
         """
-        Segments foreground and cleanly inpaints the occluded background region.
-        Eliminates the missing background void / white spots completely.
+        Continuous Depth-Image-Based Rendering (DIBR) with Z-buffering.
+        Does NOT segment or destroy objects.
+        Renders full 3D parallax and inpaints only the genuine geometric disocclusion gaps.
         """
         h, w = img_bgr.shape[:2]
         
-        # Automatically determine foreground threshold
-        fg_thresh = np.percentile(depth, 55)
-        fg_raw = (depth >= fg_thresh).astype(np.uint8) * 255
+        # Parallax displacement based on distance from focal plane
+        # Objects closer than focus_depth move forward; farther objects move backward.
+        dx = (depth - focus_depth) * max_shift * shift_x
+        dy = (depth - focus_depth) * max_shift * shift_y
         
-        # Clean mask via morphological filters
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
-        fg_clean = cv2.morphologyEx(fg_raw, cv2.MORPH_CLOSE, kernel)
-        fg_clean = cv2.morphologyEx(fg_clean, cv2.MORPH_OPEN, kernel)
+        grid_y, grid_x = np.indices((h, w), dtype=np.float32)
+        target_x = grid_x + dx
+        target_y = grid_y + dy
         
-        # Keep significant foreground contours
-        contours, _ = cv2.findContours(fg_clean, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        clean_mask = np.zeros_like(fg_clean)
-        min_area = w * h * 0.015 # at least 1.5% of total frame
-        for c in contours:
-            if cv2.contourArea(c) > min_area:
-                cv2.drawContours(clean_mask, [c], -1, 255, -1)
-                
-        # Dilate foreground mask to define disocclusion inpainting boundary
-        dilation_radius = int(max_shift * 1.8) + 3
-        inpaint_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (dilation_radius, dilation_radius))
-        inpaint_mask = cv2.dilate(clean_mask, inpaint_kernel, iterations=1)
+        warped = np.zeros_like(img_bgr)
+        z_buf = np.full((h, w), -1.0, dtype=np.float32)
         
-        # Perform inpainting to reconstruct background behind the subjects
-        bg_inpainted = cv2.inpaint(img_bgr, inpaint_mask, inpaintRadius=9, flags=cv2.INPAINT_TELEA)
-        bg_depth = cv2.inpaint((depth * 255).astype(np.uint8), inpaint_mask, inpaintRadius=9, flags=cv2.INPAINT_TELEA).astype(np.float32) / 255.0
+        # Vectorized projection
+        fx = target_x.ravel()
+        fy = target_y.ravel()
+        fz = depth.ravel()
+        fc = img_bgr.reshape(-1, 3)
         
-        # Soft feather alpha edge for smooth foreground blending
-        fg_alpha = cv2.GaussianBlur(clean_mask.astype(np.float32) / 255.0, (15, 15), 0)
-        fg_alpha = np.clip(fg_alpha[:, :, np.newaxis], 0.0, 1.0)
+        valid = (fx >= 0) & (fx < w - 1) & (fy >= 0) & (fy < h - 1)
+        fx = fx[valid]
+        fy = fy[valid]
+        fz = fz[valid]
+        fc = fc[valid]
         
-        return {
-            'bg_img': bg_inpainted,
-            'bg_depth': bg_depth,
-            'fg_img': img_bgr,
-            'fg_depth': depth,
-            'fg_alpha': fg_alpha,
-            'mask': clean_mask
-        }
+        # Sort ascending by depth: nearer pixels (higher depth) are drawn last and overwrite farther ones
+        order = np.argsort(fz)
+        fx = fx[order]
+        fy = fy[order]
+        fz = fz[order]
+        fc = fc[order]
+        
+        ix0 = np.floor(fx).astype(int)
+        iy0 = np.floor(fy).astype(int)
+        
+        # 2x2 bilinear splatting to prevent sampling pinholes
+        for ox, oy in [(0, 0), (1, 0), (0, 1), (1, 1)]:
+            px = np.clip(ix0 + ox, 0, w - 1)
+            py = np.clip(iy0 + oy, 0, h - 1)
+            z_buf[py, px] = fz
+            warped[py, px] = fc
+            
+        # Detect true disocclusion holes (pixels where no surface landed)
+        holes = (z_buf < 0).astype(np.uint8) * 255
+        
+        # Inpaint only the actual disocclusion boundaries
+        if np.any(holes > 0):
+            filled = cv2.inpaint(warped, holes, inpaintRadius=3, flags=cv2.INPAINT_NS)
+        else:
+            filled = warped
+            
+        return filled
 
     def convert_image_to_musubi_video(
         self,
@@ -124,7 +145,7 @@ class Musubi3DConverter:
         progress_callback=None
     ):
         """
-        Generates a Musubi-ready MP4 video from a 2D image.
+        Generates a Musubi-ready MP4 video from a 2D image using clean DIBR.
         """
         img = cv2.imread(input_image_path)
         if img is None:
@@ -141,30 +162,36 @@ class Musubi3DConverter:
             sy = (nh - target_h) // 2
             base_img = resized[sy:sy+target_h, sx:sx+target_w]
         else: # diorama mode
-            card_w = int(target_w * 0.80)
+            card_w = int(target_w * 0.82)
             card_h = int(card_w * (ih / iw))
-            if card_h > int(target_h * 0.68):
-                card_h = int(target_h * 0.68)
+            if card_h > int(target_h * 0.70):
+                card_h = int(target_h * 0.70)
                 card_w = int(card_h * (iw / ih))
             base_img = cv2.resize(img, (card_w, card_h), interpolation=cv2.INTER_CUBIC)
 
         h, w = base_img.shape[:2]
         depth = self.estimate_depth(base_img)
-        layers = self.prepare_layers(base_img, depth, max_shift=int(sway_amount * 1.5))
         
+        # Automatically detect the focal subject depth
+        # Look at the bottom-center region (typical portrait subject location)
+        sub_h0, sub_h1 = int(h * 0.4), int(h * 0.95)
+        sub_w0, sub_w1 = int(w * 0.25), int(w * 0.75)
+        subject_region = depth[sub_h0:sub_h1, sub_w0:sub_w1]
+        if subject_region.size > 0:
+            focus_depth = float(np.median(subject_region))
+        else:
+            focus_depth = float(np.median(depth))
+            
         total_frames = int(duration * fps)
         temp_raw = output_video_path + ".temp.mp4"
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(temp_raw, fourcc, fps, (target_w, target_h))
         
-        grid_x, grid_y = np.meshgrid(np.arange(w, dtype=np.float32), np.arange(h, dtype=np.float32))
-        focus_depth = 0.65
-        
         # Shadowbox background for diorama mode
         if mode == "diorama":
             box_bg = np.zeros((target_h, target_w, 3), dtype=np.uint8)
             for y_i in range(target_h):
-                val = int(24 + 32 * (1.0 - y_i / target_h)) # soft overhead spotlight
+                val = int(22 + 30 * (1.0 - y_i / target_h)) # soft overhead spotlight
                 box_bg[y_i, :] = (val, val, val + 3)
             card_x0 = (target_w - w) // 2
             card_y0 = (target_h - h) // 2
@@ -174,34 +201,22 @@ class Musubi3DConverter:
             
             if sway_axis == "circle":
                 shift_x = np.sin(phase)
-                shift_y = np.cos(phase) * 0.5
+                shift_y = np.cos(phase) * 0.35
             elif sway_axis == "figure8":
                 shift_x = np.sin(phase)
-                shift_y = np.sin(2 * phase) * 0.4
+                shift_y = np.sin(2 * phase) * 0.30
             else: # horizontal x-axis sway (standard for 3D parallax)
                 shift_x = np.sin(phase)
                 shift_y = 0.0
                 
-            # Displacements
-            bg_disp_x = (layers['bg_depth'] - focus_depth) * sway_amount * shift_x
-            bg_disp_y = (layers['bg_depth'] - focus_depth) * sway_amount * shift_y
-            fg_disp_x = (layers['fg_depth'] - focus_depth) * sway_amount * shift_x
-            fg_disp_y = (layers['fg_depth'] - focus_depth) * sway_amount * shift_y
-            
-            # Warp background
-            bg_src_x = np.clip(grid_x - bg_disp_x, 0, w - 1).astype(np.float32)
-            bg_src_y = np.clip(grid_y - bg_disp_y, 0, h - 1).astype(np.float32)
-            warped_bg = cv2.remap(layers['bg_img'], bg_src_x, bg_src_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
-            
-            # Warp foreground
-            fg_src_x = np.clip(grid_x - fg_disp_x, 0, w - 1).astype(np.float32)
-            fg_src_y = np.clip(grid_y - fg_disp_y, 0, h - 1).astype(np.float32)
-            warped_fg = cv2.remap(layers['fg_img'], fg_src_x, fg_src_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
-            warped_alpha = cv2.remap(layers['fg_alpha'], fg_src_x, fg_src_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-            if len(warped_alpha.shape) == 2:
-                warped_alpha = warped_alpha[:, :, np.newaxis]
-                
-            composite = (warped_fg * warped_alpha + warped_bg * (1.0 - warped_alpha)).astype(np.uint8)
+            composite = self.render_dibr_frame(
+                base_img,
+                depth,
+                shift_x=shift_x,
+                shift_y=shift_y,
+                focus_depth=focus_depth,
+                max_shift=sway_amount
+            )
             
             if mode == "full":
                 frame_out = composite

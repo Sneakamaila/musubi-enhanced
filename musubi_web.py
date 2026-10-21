@@ -67,7 +67,9 @@ async def generate_preview(file: UploadFile = File(...)):
     img_prev = cv2.resize(img, (prev_w, prev_h))
     
     depth = conv.estimate_depth(img_prev)
-    layers = conv.prepare_layers(img_prev, depth, max_shift=14)
+    # Generate sample 3D parallax view (max displacement)
+    prev_focus = float(np.median(depth))
+    parallax_prev = conv.render_dibr_frame(img_prev, depth, shift_x=1.0, max_shift=12.0, focus_depth=prev_focus)
     
     # Colorize depth for display
     depth_u8 = (depth * 255).astype(np.uint8)
@@ -75,14 +77,14 @@ async def generate_preview(file: UploadFile = File(...)):
     
     _, orig_buf = cv2.imencode('.jpg', img_prev, [cv2.IMWRITE_JPEG_QUALITY, 85])
     _, depth_buf = cv2.imencode('.jpg', depth_color, [cv2.IMWRITE_JPEG_QUALITY, 85])
-    _, bg_buf = cv2.imencode('.jpg', layers['bg_img'], [cv2.IMWRITE_JPEG_QUALITY, 85])
+    _, parallax_buf = cv2.imencode('.jpg', parallax_prev, [cv2.IMWRITE_JPEG_QUALITY, 85])
     
     return {
         "file_id": file_id,
         "filename": os.path.basename(upload_path),
         "orig_b64": base64.b64encode(orig_buf).decode('utf-8'),
         "depth_b64": base64.b64encode(depth_buf).decode('utf-8'),
-        "bg_b64": base64.b64encode(bg_buf).decode('utf-8'),
+        "parallax_b64": base64.b64encode(parallax_buf).decode('utf-8'),
         "width": w,
         "height": h
     }
