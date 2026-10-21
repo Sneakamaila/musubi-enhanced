@@ -92,11 +92,11 @@ async def generate_preview(file: UploadFile = File(...)):
 @app.post("/api/render")
 async def render_video(
     file_id: str = Form(...),
-    sway: float = Form(12.0),
+    sway: float = Form(8.0),
     axis: str = Form("x"),
     duration: float = Form(6.0),
     fps: int = Form(30),
-    mode: str = Form("full"),
+    mode: str = Form("hld_card"),
     resolution: str = Form("576x1024")
 ):
     conv = get_converter()
@@ -108,7 +108,12 @@ async def render_video(
     out_name = f"musubi_{file_id}_{mode}_{int(duration)}s.mp4"
     out_path = os.path.join(OUTPUTS_DIR, out_name)
     
-    res = (576, 1024) if resolution == "576x1024" else (1080, 1920)
+    res_map = {
+        "576x1024": (576, 1024),
+        "1080x1920": (1080, 1920),
+        "2160x3840": (2160, 3840)
+    }
+    res = res_map.get(resolution, (576, 1024))
     
     conv.convert_image_to_musubi_video(
         input_image_path=in_path,

@@ -3,39 +3,47 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
 [![Unraid](https://img.shields.io/badge/Unraid-Compatible-orange.svg)](unraid-musubi-enhanced.xml)
 [![Python](https://img.shields.io/badge/Python-3.11+-green.svg)](https://python.org)
-[![Looking Glass](https://img.shields.io/badge/Looking%20Glass-Musubi%207%22-purple.svg)](https://lookingglassfactory.com)
+[![Looking Glass HLD](https://img.shields.io/badge/Looking%20Glass-HLD%20Architecture-purple.svg)](https://hlddocs.lookingglassfactory.com/)
 
-**Musubi 3D Studio** ist eine moderne, KI-gestützte Komplettlösung zur Generierung von hochwertigen 3D-Parallax-Videos (`.mp4`) für den **Looking Glass Musubi** holografischen Bilderrahmen.
+**Musubi 3D Studio** ist eine KI-gestützte Komplettlösung zur Generierung von hochwertigen 3D-Parallax-Videos (`.mp4`) für den **Looking Glass Musubi** und die gesamte **Hololuminescent™ Display (HLD)** Produktfamilie.
 
-Die Anwendung dient als leistungsstarke Alternative zur Standard-Software und ermöglicht die professionelle Aufbereitung von 2D-Fotos zu räumlichen 3D-Videoloops mit feiner Tiefenstaffelung und sauber rekonstruierten Bildinhalten.
+Die Anwendung wurde unter strikter Berücksichtigung der offiziellen [Looking Glass HLD Dokumentation](https://hlddocs.lookingglassfactory.com/) entwickelt. Sie erzeugt exakt nach den optischen und physikalischen Anforderungen der HLD-Technologie aufbereitete Medien.
 
 ---
 
-## ✨ Features & Highlights
+## 🔬 HLD-Konforme Kernfeatures
 
-* **Modernste KI-Tiefenschätzung (Depth-Anything-V2):**  
-  Berechnet detaillierte, metrisch stimmige Tiefenkarten mit präzisen Trennkanten um Personen, Haare und feine Konturen.
-* **Intelligentes Disocclusion Inpainting:**  
-  Bei Kameraschwenks verdeckte Bildbereiche werden im Hintergrund nahtlos und fotorealistisch rekonstruiert. Keine Löcher, kein Tearing und keine unschönen Kanten-Artefakte.
-* **Harmonische Sinus-Kamerabewegung (Nahtloser Loop):**  
-  Die virtuelle Kamera schwenkt entlang einer mathematischen Sinuskurve. Start- und Endframe sind exakt identisch, wodurch das Video auf dem Rahmen in einer perfekten, ruckelfreien Endlosschleife läuft.
-* **Wählbare Präsentations-Modi:**
-  - *Vollbild 9:16 (Immersiv):* Das Foto füllt das Display randlos aus – ideal für Landschafts- und Personenaufnahmen.
-  - *Musubi Diorama-Box:* Die Fotokarte schwebt mit weichem Schattenwurf und Decken-Spotlight in einem virtuellen 3D-Schattenkasten.
-* **Natives Musubi-Format:**  
-  Exportiert direkt als H.264 MP4 in 576 × 1024 Pixeln (9:16 Portrait) oder wahlweise Full HD (1080 × 1920) bei 30 oder 60 FPS.
-* **Intuitive Bedienung:**  
-  Moderne Web-Oberfläche mit Drag & Drop, Vorschau von Tiefenkarte und rekonstruiertem Hintergrund sowie ein CLI-Tool für die automatisierte Stapelverarbeitung.
-* **Cloud- & Server-Ready:**  
-  Vollständig vorkonfiguriert für **Docker** und **Unraid**.
+* **Pre-matted Reines Weiß (`#FFFFFF`) für echte HLD-Transparenz:**  
+  HLD-Displays kombinieren ein Frontdisplay mit einer physischen holografischen Lichtkammer ("Alcove") im optischen Multiplikations-Mischmodus (*Multiply*). Reines Weiß (`1.0`) wirkt optisch zu 100 % transparent. Der `hld_card`-Modus bettet Fotos mit feinen Rundungen auf reinweißem Grund ein, sodass das Bild frei im physischen 3D-Schaukasten des Musubi schwebt.
+* **Physikalischer Boden-Kontaktschatten:**  
+  Ein berechneter, weich auslaufender Kontaktschatten multipliziert sich direkt mit dem Boden des physischen 3D-Kastens und verankert die Erinnerung räumlich in der Box.
+* **Safe-Areas der Alcove:**  
+  Einhaltung der offiziellen Sicherheitsränder (~3–4 % Randabstand), damit Bildinhalte niemals an die Wände oder die Decke des Schaukastens stoßen.
+* **Subtile, natürliche Parallaxe (2°–5° Richtlinie):**  
+  Statt übertriebener Drehungen, die das menschliche Auge überfordern, nutzt das Studio feinfühlig kalibrierte Kameraschwünge (~2.4°), die für lebendige, natürliche Raumtiefe ohne Geisterbilder sorgen.
+* **Clean-DIBR v2 Engine:**  
+  Kontinuierliche Vorwärtsprojektion mit Z-Buffering. Kein Zerschneiden von Objekten in künstliche Ebenen – sämtliche Bilddetails (z. B. Bäume, Haare, Hintergründe) bleiben gestochen scharf.
+* **Präzise KI-Tiefenschätzung (Depth-Anything-V2):**  
+  Modernste Tiefenkarten mit exakter räumlicher Trennung.
+* **HLD Video-Spezifikationen:**  
+  Exportiert direkt als H.264 MP4 im **BT.709 Farbraum** (`yuv420p`, High Profile, Faststart), nativ optimiert für den integrierten Musubi-Hardwareplayer.
+
+---
+
+## 🎨 Verfügbare Ausgabe-Modi
+
+1. **`hld_card` (Musubi HLD-Card – Standard für die Hardware):**  
+   Die Fotokarte schwebt mit kontinuierlicher Raumtiefe im echten Musubi-Schaukasten. Der Hintergrund ist pre-matted reinweiß und auf dem echten Musubi transparent.
+2. **`simulated_box` (Simulierte Alcove – PC-Monitor-Vorschau):**  
+   Zeichnet den virtuellen Schaukasten mit Wänden und Deckenbeleuchtung – ideal zur Beurteilung des Effekts auf normalen 2D-Bildschirmen.
+3. **`full` (Vollbild 9:16 Immersiv):**  
+   Füllt das gesamte Display randlos mit flüssiger 3D-Parallaxe aus.
 
 ---
 
 ## 🐳 Installation auf Unraid Server (Docker)
 
 ### Option 1: Docker Compose (Empfohlen)
-
-Wenn du das Unraid-Plugin **Docker Compose Manager** nutzt:
 
 1. Repository in dein Appdata-Verzeichnis klonen:
    ```bash
@@ -47,8 +55,7 @@ Wenn du das Unraid-Plugin **Docker Compose Manager** nutzt:
    ```bash
    docker compose up -d --build
    ```
-3. Im Browser öffnen:  
-   **`http://<DEINE-UNRAID-IP>:5151`**
+3. Im Browser öffnen: **`http://<DEINE-UNRAID-IP>:5151`**
 
 ---
 
@@ -58,7 +65,7 @@ Kopiere die Vorlage [`unraid-musubi-enhanced.xml`](unraid-musubi-enhanced.xml) i
 ```bash
 cp unraid-musubi-enhanced.xml /boot/config/plugins/dockerMan/templates-user/my-musubi-enhanced.xml
 ```
-Gehe danach in der Unraid Web-GUI auf den Tab **Docker** ➔ **Add Container** ➔ wähle die Vorlage **musubi-enhanced** aus.
+Wähle in der Unraid Web-GUI unter **Docker** ➔ **Add Container** die Vorlage **musubi-enhanced** aus.
 
 #### Pfad-Zuweisungen (Volume Mappings):
 | Host-Pfad (Unraid) | Container-Pfad | Beschreibung |
@@ -70,35 +77,14 @@ Gehe danach in der Unraid Web-GUI auf den Tab **Docker** ➔ **Add Container** �
 
 ---
 
-### Option 3: Direkter Docker Run Befehl
-```bash
-docker build -t musubi-enhanced:latest .
-
-docker run -d \
-  --name=musubi-enhanced \
-  -p 5151:5151 \
-  -v /mnt/user/appdata/musubi/outputs:/app/outputs \
-  -v /mnt/user/appdata/musubi/uploads:/app/uploads \
-  -v /mnt/user/appdata/musubi/models:/app/models \
-  --restart unless-stopped \
-  musubi-enhanced:latest
-```
-
----
-
 ## 💻 Lokale Installation (ohne Docker)
 
 Voraussetzungen: Python 3.10+, `ffmpeg`
 
 ```bash
-# 1. Repository klonen
 git clone https://github.com/Sneakamaila/musubi-enhanced.git
 cd musubi-enhanced
-
-# 2. Abhängigkeiten installieren
 pip install -r requirements.txt
-
-# 3. Web-Studio starten
 ./start_studio.sh
 ```
 Öffne anschließend **`http://localhost:5151`** im Browser.
@@ -108,21 +94,21 @@ pip install -r requirements.txt
 ## 🛠️ Verwendung
 
 ### Grafische Web-Oberfläche (Web UI)
-1. Ziehe dein Foto per **Drag & Drop** in die Web-App.
-2. Kontrolliere sofort die **KI-Tiefenkarte** und den **aufgefüllten Hintergrund**.
-3. Wähle den gewünschten Modus (*Vollbild 9:16* oder *Musubi Diorama*).
-4. Passe die Schwenkstärke (Parallaxe), Achse (Horizontal, Kreis, 8er-Schleife) und Dauer (3–15 s) an.
-5. Klicke auf **"Musubi-Video erstellen"** und lade die fertige `.mp4`-Datei direkt herunter.
+1. Foto per **Drag & Drop** in die Web-App ziehen.
+2. Vorschau der **KI-Tiefenkarte** und des **3D-Parallax-Effekts** prüfen.
+3. Modus wählen (*HLD-Card für echten Musubi*, *Simulierte Box* oder *Vollbild 9:16*).
+4. Kameraschwenk einstellen (Standard: 8 px / ~2.4° für HLD).
+5. Klick auf **"Musubi-Video erstellen"** – das fertige `.mp4` wird sofort gerendert und steht zum Download bereit.
 
-### CLI (Kommandozeile für Stapelverarbeitung)
+### CLI (Kommandozeile)
 ```bash
-# Standardkonvertierung:
-python3 musubi_cli.py mein_foto.jpg -o output.mp4
+# Standardkonvertierung für echten Musubi:
+python3 musubi_cli.py foto.jpg -o video_musubi.mp4
 
 # Erweiterte Optionen:
-python3 musubi_cli.py mein_foto.jpg \
-  --mode diorama \
-  --sway 12.0 \
+python3 musubi_cli.py foto.jpg \
+  --mode hld_card \
+  --sway 8.0 \
   --axis x \
   --duration 6.0 \
   --fps 30 \
@@ -133,11 +119,11 @@ python3 musubi_cli.py mein_foto.jpg \
 
 ## 📲 Video auf den Looking Glass Musubi übertragen
 
-1. Öffne die offizielle **Looking Glass Musubi App** auf deinem PC oder Mac.
-2. Ziehe die von *Musubi 3D Studio* erstellte `.mp4`-Datei per Drag & Drop in die App (die Desktop-Software akzeptiert MP4-Videos direkt als Hologramm-Momente).
-3. Schließe den Musubi per USB-C-Kabel an und synchronisiere das Album auf den internen Gerätespeicher.
+1. Öffne die offizielle **Looking Glass Musubi App** auf deinem Computer.
+2. Ziehe die mit *Musubi 3D Studio* erstellte `.mp4`-Datei per Drag & Drop in die App.
+3. Verbinde den Musubi per USB-C-Kabel und synchronisiere die Medien auf das Gerät.
 
 ---
 
 ## 📄 Lizenz
-MIT License. Erstellt für die Looking Glass Musubi Community.
+MIT License. Erstellt für die Looking Glass HLD Community.

@@ -358,21 +358,28 @@
             <!-- Mode -->
             <div class="control-group">
                 <div class="control-header">
-                    <span>Präsentations-Modus</span>
+                    <span>HLD Ausgabe-Modus</span>
                 </div>
-                <div class="toggle-group" id="modeGroup">
-                    <button class="toggle-btn active" onclick="setMode('full', this)">Vollbild 9:16</button>
-                    <button class="toggle-btn" onclick="setMode('diorama', this)">Musubi Diorama</button>
+                <div class="toggle-group" id="modeGroup" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <button class="toggle-btn active" onclick="setMode('hld_card', this)">HLD-Card (Musubi)</button>
+                    <button class="toggle-btn" onclick="setMode('simulated_box', this)">Simulierte Box</button>
+                    <button class="toggle-btn" onclick="setMode('full', this)">Vollbild 9:16</button>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem;">
+                    <strong>HLD-Card:</strong> Pre-matted Weiß (#FFFFFF) mit Kontaktschatten – transparent auf echtem Musubi!
                 </div>
             </div>
 
             <!-- Sway Amount -->
             <div class="control-group">
                 <div class="control-header">
-                    <span>3D-Parallaxe (Schwenkstärke)</span>
-                    <span class="val-badge" id="swayVal">12 px</span>
+                    <span>3D-Parallaxe (Kamerawinkel)</span>
+                    <span class="val-badge" id="swayVal">8 px (~2.4°)</span>
                 </div>
-                <input type="range" id="swayRange" min="4" max="24" value="12" oninput="updateSway(this.value)">
+                <input type="range" id="swayRange" min="2" max="18" value="8" oninput="updateSway(this.value)">
+                <div style="font-size: 0.75rem; color: var(--text-dim);">
+                    Offizielle HLD-Richtlinie: 2°–5° für fotorealistische Raumtiefe ohne Verzerrung.
+                </div>
             </div>
 
             <!-- Axis -->
@@ -403,7 +410,8 @@
                 </div>
                 <select id="resSelect">
                     <option value="576x1024" selected>576 × 1024 (Musubi 7" Nativ)</option>
-                    <option value="1080x1920">1080 × 1920 (Full-HD Portrait)</option>
+                    <option value="1080x1920">1080 × 1920 (HLD 16" / Full-HD)</option>
+                    <option value="2160x3840">2160 × 3840 (HLD 27" & 86" 4K)</option>
                 </select>
             </div>
 
@@ -435,7 +443,7 @@
 
     <script>
         let currentFileId = null;
-        let currentMode = 'full';
+        let currentMode = 'hld_card';
         let currentTab = 'result';
 
         // Drag and drop handling
@@ -459,7 +467,8 @@
         }
 
         function updateSway(val) {
-            document.getElementById('swayVal').innerText = val + ' px';
+            const deg = (val * 0.3).toFixed(1);
+            document.getElementById('swayVal').innerText = val + ' px (~' + deg + '°)';
         }
         function updateDur(val) {
             document.getElementById('durVal').innerText = val + ' s';

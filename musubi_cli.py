@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Musubi 3D CLI - Command Line Tool for Batch Converting Images to Musubi 3D MP4 Videos
+Compliant with official Looking Glass Hololuminescent Display (HLD) specifications.
 """
 
 import argparse
@@ -15,12 +16,17 @@ def main():
     )
     parser.add_argument("input", help="Path to input photo (JPG, PNG, WebP)")
     parser.add_argument("-o", "--output", default=None, help="Path to output MP4 video (default: <input>_musubi.mp4)")
-    parser.add_argument("--mode", choices=["full", "diorama"], default="full", help="Presentation mode: full (immersive 9:16) or diorama (floating shadowbox card)")
-    parser.add_argument("--sway", type=float, default=12.0, help="Parallax sway amount (default: 12.0, typical 8.0-16.0)")
+    parser.add_argument(
+        "--mode",
+        choices=["hld_card", "full", "simulated_box"],
+        default="hld_card",
+        help="Presentation mode: hld_card (Pre-matted White for real Musubi frame), full (edge-to-edge 9:16), simulated_box (for PC preview)"
+    )
+    parser.add_argument("--sway", type=float, default=8.0, help="Parallax sway amount (default: 8.0, recommended 6.0-12.0 for HLD)")
     parser.add_argument("--axis", choices=["x", "circle", "figure8"], default="x", help="Camera motion axis: x (horizontal), circle, figure8")
     parser.add_argument("--duration", type=float, default=6.0, help="Video duration in seconds (default: 6.0, seamless loop)")
     parser.add_argument("--fps", type=int, default=30, help="Framerate in FPS (default: 30)")
-    parser.add_argument("--resolution", choices=["576x1024", "1080x1920"], default="576x1024", help="Video resolution (default: 576x1024 native Musubi)")
+    parser.add_argument("--resolution", choices=["576x1024", "1080x1920", "2160x3840"], default="576x1024", help="Video resolution (default: 576x1024 native Musubi)")
 
     args = parser.parse_args()
 
@@ -32,23 +38,28 @@ def main():
         base, _ = os.path.splitext(args.input)
         args.output = f"{base}_musubi_{args.mode}.mp4"
 
-    res = (576, 1024) if args.resolution == "576x1024" else (1080, 1920)
+    res_map = {
+        "576x1024": (576, 1024),
+        "1080x1920": (1080, 1920),
+        "2160x3840": (2160, 3840)
+    }
+    res = res_map.get(args.resolution, (576, 1024))
 
-    print(f"=== Musubi 3D Video Converter ===")
+    print(f"=== Musubi 3D Video Converter (HLD Architecture) ===")
     print(f"Input:       {args.input}")
     print(f"Output:      {args.output}")
     print(f"Mode:        {args.mode}")
     print(f"Resolution:  {res[0]}x{res[1]} (9:16 Portrait)")
     print(f"Sway:        {args.sway} | Axis: {args.axis}")
     print(f"Duration:    {args.duration}s @ {args.fps} FPS")
-    print("---------------------------------")
+    print("-----------------------------------------------------")
 
     t0 = time.time()
     converter = Musubi3DConverter()
     
     def on_progress(current, total):
         pct = int((current / total) * 100)
-        sys.stdout.write(f"\rRendering: [{current}/{total}] {pct}%")
+        sys.stdout.write(f"\rRendering HLD video: [{current}/{total}] {pct}%")
         sys.stdout.flush()
 
     converter.convert_image_to_musubi_video(
@@ -62,7 +73,7 @@ def main():
         target_resolution=res,
         progress_callback=on_progress
     )
-    print("\n---------------------------------")
+    print("\n-----------------------------------------------------")
     print(f"Success! Finished in {time.time() - t0:.1f}s.")
     print(f"Musubi-ready video saved to: {args.output}")
     print("You can now import this MP4 into the Musubi Desktop App or copy it to your Musubi frame.")
