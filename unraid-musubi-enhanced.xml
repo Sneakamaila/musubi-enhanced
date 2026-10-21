@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>musubi-enhanced</Name>
+  <Repository>sneakamaila/musubi-enhanced:latest</Repository>
+  <Registry>https://github.com/Sneakamaila/musubi-enhanced</Registry>
+  <Network>bridge</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/Sneakamaila/musubi-enhanced/issues</Support>
+  <Project>https://github.com/Sneakamaila/musubi-enhanced</Project>
+  <Overview>Musubi 3D Studio - High-Fidelity 3D Parallax Video Generator fuer Looking Glass Musubi. Wandelt 2D-Fotos mittels Depth-Anything-V2 KI und Disocclusion Inpainting in fehlerfreie 3D-Videos (MP4) fuer den Musubi Bilderrahmen um.</Overview>
+  <Category>MediaApp:Video MediaServer:Video Other:</Category>
+  <WebUI>http://[IP]:[PORT:8080]</WebUI>
+  <Icon>https://raw.githubusercontent.com/Sneakamaila/musubi-enhanced/main/static/icon.png</Icon>
+  <Description>Musubi 3D Studio - 2D zu 3D Video Konverter fuer Looking Glass Musubi</Description>
+  <Networking>
+    <Mode>bridge</Mode>
+    <Publish>
+      <Port>
+        <HostPort>8080</HostPort>
+        <ContainerPort>8080</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+    </Publish>
+  </Networking>
+  <Data>
+    <Volume>
+      <HostDir>/mnt/user/appdata/musubi/outputs</HostDir>
+      <ContainerDir>/app/outputs</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <Volume>
+      <HostDir>/mnt/user/appdata/musubi/uploads</HostDir>
+      <ContainerDir>/app/uploads</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <Volume>
+      <HostDir>/mnt/user/appdata/musubi/models</HostDir>
+      <ContainerDir>/app/models</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+  </Data>
+  <Environment>
+    <Variable>
+      <Value>8080</Value>
+      <Name>PORT</Name>
+      <Mode/>
+    </Variable>
+  </Environment>
+  <Config Name="WebUI Port" Target="8080" Default="8080" Mode="tcp" Description="Port fuer die Web-Oberflaeche" Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Outputs Pfad" Target="/app/outputs" Default="/mnt/user/appdata/musubi/outputs" Mode="rw" Description="Speicherort fuer generierte Musubi MP4 Videos" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/musubi/outputs</Config>
+  <Config Name="Uploads Pfad" Target="/app/uploads" Default="/mnt/user/appdata/musubi/uploads" Mode="rw" Description="Temporaere Uploads von Ausgangsfotos" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/musubi/uploads</Config>
+  <Config Name="Models Cache" Target="/app/models" Default="/mnt/user/appdata/musubi/models" Mode="rw" Description="KI-Modell-Zwischenspeicher (Depth-Anything-V2)" Type="Path" Display="advanced" Required="false" Mask="false">/mnt/user/appdata/musubi/models</Config>
+</Container>

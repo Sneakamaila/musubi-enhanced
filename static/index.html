@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musubi 3D Studio - Looking Glass 3D Video Converter</title>
+    <style>
+        :root {
+            --bg: #0c0f17;
+            --surface: #161b26;
+            --surface-hover: #1f2737;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.35);
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+            --border: #2e384d;
+            --success: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Header */
+        header {
+            background: rgba(22, 27, 38, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo-area { display: flex; align-items: center; gap: 0.75rem; }
+        .logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 1.1rem;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+        .logo-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px; }
+        .badge {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        /* Layout */
+        .container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 1.5rem;
+            padding: 1.5rem 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Preview Stage */
+        .preview-stage {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+        }
+        .stage-tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.75rem;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active, .tab-btn:hover {
+            color: var(--text);
+            background: var(--surface-hover);
+        }
+        .tab-btn.active {
+            color: #a5b4fc;
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .viewport-box {
+            flex: 1;
+            background: #080a0f;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            min-height: 520px;
+        }
+        .viewport-content {
+            max-height: 80vh;
+            max-width: 90%;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+
+        /* Dropzone */
+        .dropzone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 3rem 2rem;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            width: 80%;
+            max-width: 500px;
+        }
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .drop-icon {
+            width: 48px; height: 48px;
+            background: var(--surface-hover);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+        .val-badge {
+            color: #818cf8;
+            font-weight: 700;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+        .toggle-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            background: #0e121a;
+            padding: 0.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px var(--accent-glow);
+        }
+        select {
+            background: #0e121a;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.6rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        /* Action Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            color: white;
+            border: none;
+            padding: 0.85rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px var(--accent-glow);
+            margin-top: 0.5rem;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: var(--surface-hover);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Progress / Status */
+        .status-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+            color: #a5b4fc;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Explanatory callout */
+        .info-callout {
+            background: #111622;
+            border-left: 3px solid var(--accent);
+            padding: 0.75rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+        .info-callout strong { color: var(--text); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon">❖</div>
+            <div class="logo-title">Musubi 3D Studio</div>
+            <div class="badge">Looking Glass HLD Engine</div>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-dim);">
+            Looking Glass Musubi Native (576×1024 / 9:16)
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Main Preview Area -->
+        <div class="preview-stage">
+            <div class="stage-tabs">
+                <button class="tab-btn active" onclick="switchTab('result')">🎥 3D Video Player</button>
+                <button class="tab-btn" onclick="switchTab('depth')">🌊 KI-Tiefenkarte</button>
+                <button class="tab-btn" onclick="switchTab('inpaint')">✨ Inpainted Hintergrund</button>
+                <button class="tab-btn" onclick="switchTab('original')">📷 Originalbild</button>
+            </div>
+
+            <div class="viewport-box" id="viewport">
+                <!-- Dropzone state -->
+                <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                    <div class="drop-icon">📁</div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.25rem;">Foto hier ablegen oder klicken</div>
+                        <div style="font-size: 0.85rem; color: var(--text-dim);">JPG, PNG, WebP bis 25 MB</div>
+                    </div>
+                    <button class="btn-secondary" type="button">Datei auswählen</button>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
+                </div>
+
+                <!-- Display containers -->
+                <video id="videoPlayer" class="viewport-content" loop autoplay muted playsinline style="display: none;"></video>
+                <img id="depthView" class="viewport-content" style="display: none;" alt="Depth Map">
+                <img id="inpaintView" class="viewport-content" style="display: none;" alt="Inpainted Background">
+                <img id="origView" class="viewport-content" style="display: none;" alt="Original Photo">
+            </div>
+
+            <div class="info-callout">
+                <strong>💡 Das Problem mit dem weißen Fleck gelöst:</strong> Die offizielle Musubi-Software schneidet Personen aus, füllt den verdeckten Hintergrund dahinter aber nicht auf. Bei der Kamera-Bewegung scheint dadurch der weiße App-Hintergrund durch. <strong>Musubi 3D Studio</strong> nutzt <em>Depth Anything V2</em> und <em>Disocclusion Inpainting</em>, um den Hintergrund hinter Personen lückenlos zu rekonstruieren!
+            </div>
+        </div>
+
+        <!-- Sidebar Settings -->
+        <div class="control-panel">
+            <div class="section-title">Musubi 3D Einstellungen</div>
+
+            <!-- Mode -->
+            <div class="control-group">
+                <div class="control-header">
+                    <span>Präsentations-Modus</span>
+                </div>
+                <div class="toggle-group" id="modeGroup">
+                    <button class="toggle-btn active" onclick="setMode('full', this)">Vollbild 9:16</button>
+                    <button class="toggle-btn" onclick="setMode('diorama', this)">Musubi Diorama</button>
+                </div>
+            </div>
+
+            <!-- Sway Amount -->
+            <div class="control-group">
+                <div class="control-header">
+                    <span>3D-Parallaxe (Schwenkstärke)</span>
+                    <span class="val-badge" id="swayVal">12 px</span>
+                </div>
+                <input type="range" id="swayRange" min="4" max="24" value="12" oninput="updateSway(this.value)">
+            </div>
+
+            <!-- Axis -->
+            <div class="control-group">
+                <div class="control-header">
+                    <span>Kamera-Schwenk-Achse</span>
+                </div>
+                <select id="axisSelect">
+                    <option value="x" selected>Horizontal (Y-Achsen-Wiggle / Klassisch)</option>
+                    <option value="circle">Sanfte Kreisbahn (Kreisel-3D)</option>
+                    <option value="figure8">Achter-Schleife (Cinematic Figure-8)</option>
+                </select>
+            </div>
+
+            <!-- Duration -->
+            <div class="control-group">
+                <div class="control-header">
+                    <span>Video-Dauer (Nahtloser Loop)</span>
+                    <span class="val-badge" id="durVal">6 s</span>
+                </div>
+                <input type="range" id="durRange" min="3" max="15" step="1" value="6" oninput="updateDur(this.value)">
+            </div>
+
+            <!-- Resolution -->
+            <div class="control-group">
+                <div class="control-header">
+                    <span>Auflösung (Format)</span>
+                </div>
+                <select id="resSelect">
+                    <option value="576x1024" selected>576 × 1024 (Musubi 7" Nativ)</option>
+                    <option value="1080x1920">1080 × 1920 (Full-HD Portrait)</option>
+                </select>
+            </div>
+
+            <!-- FPS -->
+            <div class="control-group">
+                <div class="control-header">
+                    <span>Bildwiederholrate (FPS)</span>
+                </div>
+                <select id="fpsSelect">
+                    <option value="30" selected>30 FPS (Flüssig & Kompakt)</option>
+                    <option value="60">60 FPS (Ultra-Smooth)</option>
+                </select>
+            </div>
+
+            <div class="status-box" id="statusBox">
+                <div class="spinner"></div>
+                <span id="statusText">Berechne Tiefenkarte & Inpainting...</span>
+            </div>
+
+            <button class="btn-primary" id="renderBtn" onclick="startRender()" disabled>
+                <span>🎬 Musubi-Video erstellen (.mp4)</span>
+            </button>
+
+            <a id="downloadBtn" class="btn-secondary" style="display: none; justify-content: center; text-decoration: none; background: #059669; border-color: #10b981; color: white; font-weight: 700;" download>
+                ⬇ Video herunterladen (.mp4)
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let currentFileId = null;
+        let currentMode = 'full';
+        let currentTab = 'result';
+
+        // Drag and drop handling
+        const dropzone = document.getElementById('dropzone');
+        ['dragenter', 'dragover'].forEach(e => {
+            dropzone.addEventListener(e, (ev) => { ev.preventDefault(); dropzone.classList.add('dragover'); });
+        });
+        ['dragleave', 'drop'].forEach(e => {
+            dropzone.addEventListener(e, (ev) => { ev.preventDefault(); dropzone.classList.remove('dragover'); });
+        });
+        dropzone.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                uploadImage(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                uploadImage(input.files[0]);
+            }
+        }
+
+        function updateSway(val) {
+            document.getElementById('swayVal').innerText = val + ' px';
+        }
+        function updateDur(val) {
+            document.getElementById('durVal').innerText = val + ' s';
+        }
+        function setMode(mode, btn) {
+            currentMode = mode;
+            document.querySelectorAll('#modeGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        async function uploadImage(file) {
+            showStatus('Analysiere Foto mit Depth-Anything-V2...');
+            document.getElementById('renderBtn').disabled = true;
+
+            const fd = new FormData();
+            fd.append('file', file);
+
+            try {
+                const resp = await fetch('/api/preview', { method: 'POST', body: fd });
+                if (!resp.ok) throw new Error('Upload fehlgeschlagen');
+                const data = await resp.json();
+
+                currentFileId = data.file_id;
+                document.getElementById('dropzone').style.display = 'none';
+                
+                document.getElementById('origView').src = 'data:image/jpeg;base64,' + data.orig_b64;
+                document.getElementById('depthView').src = 'data:image/jpeg;base64,' + data.depth_b64;
+                document.getElementById('inpaintView').src = 'data:image/jpeg;base64,' + data.bg_b64;
+
+                hideStatus();
+                document.getElementById('renderBtn').disabled = false;
+                switchTab('depth'); // show depth map first
+            } catch (err) {
+                alert('Fehler beim Analysieren des Bildes: ' + err.message);
+                hideStatus();
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const views = ['videoPlayer', 'depthView', 'inpaintView', 'origView'];
+            views.forEach(v => document.getElementById(v).style.display = 'none');
+
+            if (tab === 'result') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                if (document.getElementById('videoPlayer').src) {
+                    document.getElementById('videoPlayer').style.display = 'block';
+                } else if (!currentFileId) {
+                    document.getElementById('dropzone').style.display = 'flex';
+                } else {
+                    document.getElementById('origView').style.display = 'block';
+                }
+            } else if (tab === 'depth') {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                if (currentFileId) document.getElementById('depthView').style.display = 'block';
+                else document.getElementById('dropzone').style.display = 'flex';
+            } else if (tab === 'inpaint') {
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+                if (currentFileId) document.getElementById('inpaintView').style.display = 'block';
+                else document.getElementById('dropzone').style.display = 'flex';
+            } else if (tab === 'original') {
+                document.querySelectorAll('.tab-btn')[3].classList.add('active');
+                if (currentFileId) document.getElementById('origView').style.display = 'block';
+                else document.getElementById('dropzone').style.display = 'flex';
+            }
+        }
+
+        async function startRender() {
+            if (!currentFileId) return;
+            const sway = document.getElementById('swayRange').value;
+            const axis = document.getElementById('axisSelect').value;
+            const duration = document.getElementById('durRange').value;
+            const fps = document.getElementById('fpsSelect').value;
+            const res = document.getElementById('resSelect').value;
+
+            showStatus('Rendere nahtlosen 3D Parallaxe-Loop (H.264 MP4)...');
+            document.getElementById('renderBtn').disabled = true;
+
+            const fd = new FormData();
+            fd.append('file_id', currentFileId);
+            fd.append('sway', sway);
+            fd.append('axis', axis);
+            fd.append('duration', duration);
+            fd.append('fps', fps);
+            fd.append('mode', currentMode);
+            fd.append('resolution', res);
+
+            try {
+                const resp = await fetch('/api/render', { method: 'POST', body: fd });
+                if (!resp.ok) throw new Error('Videoerstellung fehlgeschlagen');
+                const data = await resp.json();
+
+                hideStatus();
+                document.getElementById('renderBtn').disabled = false;
+
+                // Update video player
+                const player = document.getElementById('videoPlayer');
+                player.src = data.video_url + '?t=' + Date.now();
+                player.style.display = 'block';
+                player.play();
+
+                const dl = document.getElementById('downloadBtn');
+                dl.href = data.video_url;
+                dl.download = data.filename;
+                dl.style.display = 'inline-flex';
+
+                switchTab('result');
+            } catch (err) {
+                alert('Fehler beim Rendern: ' + err.message);
+                hideStatus();
+                document.getElementById('renderBtn').disabled = false;
+            }
+        }
+
+        function showStatus(text) {
+            const box = document.getElementById('statusBox');
+            document.getElementById('statusText').innerText = text;
+            box.style.display = 'flex';
+        }
+        function hideStatus() {
+            document.getElementById('statusBox').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

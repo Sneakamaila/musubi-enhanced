@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Model weights (auto-downloaded at build/runtime)
+models/*.onnx
+!models/.gitkeep
+
+# Uploads and temporary outputs
+uploads/*
+!uploads/.gitkeep
+outputs/*.mp4
+!outputs/.gitkeep
+*.temp.mp4
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
