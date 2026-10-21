@@ -12,12 +12,20 @@ ENV/
 models/*.onnx
 !models/.gitkeep
 
-# Uploads and temporary outputs
+# User media, uploads, outputs, and samples - strictly excluded from Git
+samples/
 uploads/*
 !uploads/.gitkeep
-outputs/*.mp4
+outputs/*
 !outputs/.gitkeep
+*.mp4
 *.temp.mp4
+*.jpg
+*.jpeg
+*.png
+!static/icon.png
+*.webp
+*.heic
 
 # OS / Editor
 .DS_Store
