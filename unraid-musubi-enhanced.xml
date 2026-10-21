@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>musubi-enhanced</Name>
-  <Version>2.1.0</Version>
+  <Version>2.2.0</Version>
   <Repository>sneakamaila/musubi-enhanced:latest</Repository>
   <Registry>https://github.com/Sneakamaila/musubi-enhanced</Registry>
   <Network>bridge</Network>
@@ -9,11 +9,11 @@
   <Privileged>false</Privileged>
   <Support>https://github.com/Sneakamaila/musubi-enhanced/issues</Support>
   <Project>https://github.com/Sneakamaila/musubi-enhanced</Project>
-  <Overview>Musubi 3D Studio - High-Fidelity 3D Parallax Video Generator fuer Looking Glass Musubi. Wandelt 2D-Fotos mittels Depth-Anything-V2 KI und Disocclusion Inpainting in fehlerfreie 3D-Videos (MP4) fuer den Musubi Bilderrahmen um.</Overview>
+  <Overview>Musubi 3D Studio - High-Fidelity 3D Parallax Video Generator fuer Looking Glass Musubi. Wandelt 2D-Fotos mittels Depth-Anything-V2 KI und Subpixel-DIBR in artefaktfreie 3D-Videos (MP4) fuer den Musubi Bilderrahmen um.</Overview>
   <Category>MediaApp:Video MediaServer:Video Other:</Category>
   <WebUI>http://[IP]:[PORT:5151]</WebUI>
   <Icon>https://raw.githubusercontent.com/Sneakamaila/musubi-enhanced/main/static/icon.png</Icon>
-  <Description>Musubi 3D Studio v2.1.0 - 2D zu 3D Video Konverter fuer Looking Glass Musubi</Description>
+  <Description>Musubi 3D Studio v2.2.0 - 2D zu 3D Video Konverter fuer Looking Glass Musubi</Description>
   <Networking>
     <Mode>bridge</Mode>
     <Publish>

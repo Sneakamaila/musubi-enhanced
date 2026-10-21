@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Musubi 3D Studio v2.1.0 - Looking Glass 3D Video Converter</title>
+    <title>Musubi 3D Studio v2.2.0 - Looking Glass 3D Video Converter</title>
     <style>
         :root {
             --bg: #0c0f17;
@@ -310,7 +310,7 @@
         <div class="logo-area">
             <div class="logo-icon">❖</div>
             <div class="logo-title">Musubi 3D Studio</div>
-            <div class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-weight: 700;">v2.1.0</div>
+            <div class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4); font-weight: 700;">v2.2.0</div>
             <div class="badge">Looking Glass HLD Engine</div>
         </div>
         <div style="font-size: 0.85rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.75rem;">
@@ -349,7 +349,7 @@
             </div>
 
             <div class="info-callout">
-                <strong>💡 Tipp für das beste 3D-Ergebnis:</strong> Wähle zwischen <em>Vollbild 9:16</em> für randlose Immersion oder <em>Musubi Diorama</em> für den schwebenden 3D-Rahmen-Look. Die generierte <code>.mp4</code>-Datei lässt sich direkt in die Musubi-Software importieren und per USB-C synchronisieren.
+                <strong>💡 Warum kein Vollbild auf dem Musubi?</strong> Das Looking Glass Musubi besitzt einen echten physischen 3D-Schaukasten („Alcove“). Reines Weiß (<code>#FFFFFF</code>) ist bei HLD-Displays <strong>optisch 100% transparent</strong>. Ein opakes Vollbild-Video verdeckt den Schaukasten und bricht die Tiefenillusion. Die Modi <strong>HLD-Fotokarte</strong> und <strong>3D-Hologramm</strong> nutzen diese Optik perfekt aus.
             </div>
         </div>
 
@@ -362,13 +362,14 @@
                 <div class="control-header">
                     <span>HLD Ausgabe-Modus</span>
                 </div>
-                <div class="toggle-group" id="modeGroup" style="grid-template-columns: 1fr 1fr 1fr;">
-                    <button class="toggle-btn active" onclick="setMode('hld_card', this)">HLD-Card (Musubi)</button>
-                    <button class="toggle-btn" onclick="setMode('simulated_box', this)">Simulierte Box</button>
-                    <button class="toggle-btn" onclick="setMode('full', this)">Vollbild 9:16</button>
+                <div class="toggle-group" id="modeGroup" style="grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+                    <button class="toggle-btn active" onclick="setMode('hld_card', this)">❖ HLD-Fotokarte</button>
+                    <button class="toggle-btn" onclick="setMode('hld_subject', this)">✨ 3D-Hologramm</button>
+                    <button class="toggle-btn" onclick="setMode('simulated_box', this)">🖥 Simulierte Box</button>
+                    <button class="toggle-btn" onclick="setMode('full', this)">📺 Vollbild 9:16</button>
                 </div>
-                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem;">
-                    <strong>HLD-Card:</strong> Pre-matted Weiß (#FFFFFF) mit Kontaktschatten – transparent auf echtem Musubi!
+                <div id="modeDesc" style="font-size: 0.75rem; color: #a5b4fc; margin-top: 0.3rem; min-height: 2.2rem; line-height: 1.35;">
+                    <strong>HLD-Fotokarte (Empfohlen für Musubi):</strong> Pre-matted Weiß (#FFFFFF) mit Kontaktschatten – durch HLD-Optik transparent, Foto schwebt im physischen Schaukasten!
                 </div>
             </div>
 
@@ -442,7 +443,7 @@
             </a>
 
             <div style="text-align: center; font-size: 0.72rem; color: var(--text-dim); margin-top: 0.5rem; opacity: 0.85;">
-                Musubi 3D Studio &bull; <strong>v2.1.0</strong> (HLD Architecture)
+                Musubi 3D Studio &bull; <strong>v2.2.0</strong> (HLD Architecture)
             </div>
         </div>
     </div>
@@ -479,10 +480,21 @@
         function updateDur(val) {
             document.getElementById('durVal').innerText = val + ' s';
         }
+        const modeDescriptions = {
+            'hld_card': '<strong>HLD-Fotokarte (Empfohlen für Musubi):</strong> Pre-matted Weiß (#FFFFFF) mit Kontaktschatten – durch HLD-Optik transparent, Foto schwebt im physischen Schaukasten!',
+            'hld_subject': '<strong>Freigestelltes 3D-Hologramm:</strong> Hauptmotiv wird isoliert und schwebt mit Bodenschatten direkt im physischen Schaukasten – ganz ohne rechteckigen Rahmen!',
+            'simulated_box': '<strong>Simulierte Box (PC-Vorschau):</strong> Rendert die dunklen Wände und das Deckenlicht des Musubi-Schaukastens für normale 2D-Monitore.',
+            'full': '<strong>Vollbild 9:16 (Legacy 2D):</strong> Füllt das Display komplett aus. Nicht optimal für Musubi, da es den physischen 3D-Schaukasten im Hintergrund verdeckt.'
+        };
+
         function setMode(mode, btn) {
             currentMode = mode;
             document.querySelectorAll('#modeGroup .toggle-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            const descEl = document.getElementById('modeDesc');
+            if (descEl && modeDescriptions[mode]) {
+                descEl.innerHTML = modeDescriptions[mode];
+            }
         }
 
         async function uploadImage(file) {

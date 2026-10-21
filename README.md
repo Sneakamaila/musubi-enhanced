@@ -1,6 +1,6 @@
 # Musubi 3D Studio (musubi-enhanced) ❖
 
-[![Version](https://img.shields.io/badge/version-v2.1.0-emerald.svg)](https://github.com/Sneakamaila/musubi-enhanced)
+[![Version](https://img.shields.io/badge/version-v2.2.0-emerald.svg)](https://github.com/Sneakamaila/musubi-enhanced)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
 [![Unraid](https://img.shields.io/badge/Unraid-Compatible-orange.svg)](unraid-musubi-enhanced.xml)
 [![Python](https://img.shields.io/badge/Python-3.11+-green.svg)](https://python.org)
@@ -8,73 +8,69 @@
 
 **Musubi 3D Studio** ist eine KI-gestützte Komplettlösung zur Generierung von hochwertigen 3D-Parallax-Videos (`.mp4`) für den **Looking Glass Musubi** und die gesamte **Hololuminescent™ Display (HLD)** Produktfamilie.
 
-Die Anwendung wurde unter strikter Berücksichtigung der offiziellen [Looking Glass HLD Dokumentation](https://hlddocs.lookingglassfactory.com/) entwickelt. Sie erzeugt exakt nach den optischen und physikalischen Anforderungen der HLD-Technologie aufbereitete Medien.
+Entwickelt unter strikter Berücksichtigung der offiziellen [Looking Glass HLD Dokumentation](https://hlddocs.lookingglassfactory.com/).
 
 ---
 
-## 🔬 HLD-Konforme Kernfeatures
+## 🔬 Was ist neu in v2.2.0?
 
-* **Pre-matted Reines Weiß (`#FFFFFF`) für echte HLD-Transparenz:**  
-  HLD-Displays kombinieren ein Frontdisplay mit einer physischen holografischen Lichtkammer ("Alcove") im optischen Multiplikations-Mischmodus (*Multiply*). Reines Weiß (`1.0`) wirkt optisch zu 100 % transparent. Der `hld_card`-Modus bettet Fotos mit feinen Rundungen auf reinweißem Grund ein, sodass das Bild frei im physischen 3D-Schaukasten des Musubi schwebt.
-* **Physikalischer Boden-Kontaktschatten:**  
-  Ein berechneter, weich auslaufender Kontaktschatten multipliziert sich direkt mit dem Boden des physischen 3D-Kastens und verankert die Erinnerung räumlich in der Box.
-* **Safe-Areas der Alcove:**  
-  Einhaltung der offiziellen Sicherheitsränder (~3–4 % Randabstand), damit Bildinhalte niemals an die Wände oder die Decke des Schaukastens stoßen.
-* **Subtile, natürliche Parallaxe (2°–5° Richtlinie):**  
-  Statt übertriebener Drehungen, die das menschliche Auge überfordern, nutzt das Studio feinfühlig kalibrierte Kameraschwünge (~2.4°), die für lebendige, natürliche Raumtiefe ohne Geisterbilder sorgen.
-* **Clean-DIBR v2 Engine:**  
-  Kontinuierliche Vorwärtsprojektion mit Z-Buffering. Kein Zerschneiden von Objekten in künstliche Ebenen – sämtliche Bilddetails (z. B. Bäume, Haare, Hintergründe) bleiben gestochen scharf.
-* **Präzise KI-Tiefenschätzung (Depth-Anything-V2):**  
-  Modernste Tiefenkarten mit exakter räumlicher Trennung.
-* **HLD Video-Spezifikationen:**  
-  Exportiert direkt als H.264 MP4 im **BT.709 Farbraum** (`yuv420p`, High Profile, Faststart), nativ optimiert für den integrierten Musubi-Hardwareplayer.
+* **Subpixel Bicubic DIBR Engine (Zero Micro-Stutter):**  
+  Ersetzt diskretes Integer-Splatting durch subpixel-genaue, kontinuierliche Rückwärtsprojektion (`cv2.remap` mit `INTER_CUBIC`). Dadurch laufen Kameraschwenks in **30 FPS und 60 FPS vollkommen ruckelfrei und butterweich**.
+* **Guided Filter Depth-Snapping (Keine ausgefransten Ränder):**  
+  Durch einen Kaiming-He Guided-Filter werden die Tiefengrenzen der KI pixelgenau an den Kanten des Farbbildes verankert. Subjekt-Silhouetten (z. B. Mützen, Köpfe, Haare, Kleidung) bleiben rasiermesserscharf ohne Zähne oder Schereffekte.
+* **Layered Occlusion Inpainting (Einmaliger Pre-Pass):**  
+  Verdeckte Bereiche hinter Tiefenkanten werden vorab einmalig im 2D-Bild sauber rekonstruiert. Kein flackerndes Bild-für-Bild Inpainting mehr.
+* **Direkte FFmpeg CFR Pipe:**  
+  Frames werden direkt aus dem Speicher über eine Pipe mit hardwarepräzisem Constant Frame Rate (CFR) Zeitstempel an FFmpeg gestreamt.
+* **Neuer Modus: `hld_subject` (Freigestelltes 3D-Hologramm):**  
+  Das Hauptmotiv wird isoliert und schwebt wie ein echtes Hologramm mit Boden-Kontaktschatten im physischen Glaskasten.
 
 ---
 
-## 🎨 Verfügbare Ausgabe-Modi
+## 💡 HLD-Optik: Warum kein Vollbild auf dem Musubi?
 
-1. **`hld_card` (Musubi HLD-Card – Standard für die Hardware):**  
-   Die Fotokarte schwebt mit kontinuierlicher Raumtiefe im echten Musubi-Schaukasten. Der Hintergrund ist pre-matted reinweiß und auf dem echten Musubi transparent.
-2. **`simulated_box` (Simulierte Alcove – PC-Monitor-Vorschau):**  
-   Zeichnet den virtuellen Schaukasten mit Wänden und Deckenbeleuchtung – ideal zur Beurteilung des Effekts auf normalen 2D-Bildschirmen.
-3. **`full` (Vollbild 9:16 Immersiv):**  
-   Füllt das gesamte Display randlos mit flüssiger 3D-Parallaxe aus.
+Das Looking Glass Musubi ist ein **Hololuminescent Display (HLD)**. Es kombiniert ein Front-LCD mit einem echten, physischen 3D-Schaukasten („Alcove“) im optischen **Multiply-Mischmodus**:
+- **Reines Weiß (`#FFFFFF`) ist optisch zu 100 % transparent.** Licht passiert ungehindert das Display – man blickt direkt in den echten Schaukasten.
+- **Farben & Schatten verdunkeln das Licht** und projizieren das 3D-Objekt schwebend in die Tiefe.
+- **Ein opakes Vollbild-Video (Rechteck) verdeckt den physischen Schaukasten** und bricht die optische Tiefenillusion.
+
+### Empfohlene Ausgabe-Modi:
+
+1. **`hld_card` (HLD-Fotokarte – Standard & Empfohlen):**  
+   Das Foto wird als elegante, abgerundete 3D-Karte auf reinweißem Grund mit weichem Bodenschatten gerendert. Auf dem Musubi schwebt die Erinnerung magisch im physischen Schaukasten.
+2. **`hld_subject` (Freigestelltes 3D-Hologramm):**  
+   Nur die Person oder das Objekt schwebt freigestellt im Schaukasten – ganz ohne rechteckigen Fotorahmen.
+3. **`simulated_box` (Simulierte Box – PC-Vorschau):**  
+   Rendert für 2D-Monitore die Deckenbeleuchtung und Wände der Alcove mit, um die Wirkung am PC zu prüfen.
+4. **`full` (Vollbild 9:16 – Legacy 2D):**  
+   Füllt den Bildschirm komplett aus. Nur für herkömmliche 2D-Displays gedacht.
 
 ---
 
 ## 🐳 Installation auf Unraid Server (Docker)
 
-### Option 1: Docker Compose (Empfohlen)
+### Erstinstallation via Docker Compose:
 
-1. Repository in dein Appdata-Verzeichnis klonen:
-   ```bash
-   cd /mnt/user/appdata
-   git clone https://github.com/Sneakamaila/musubi-enhanced.git
-   cd musubi-enhanced
-   ```
-2. Container starten:
-   ```bash
-   docker compose up -d --build
-   ```
-3. Im Browser öffnen: **`http://<DEINE-UNRAID-IP>:5151`**
+```bash
+cd /mnt/user/appdata
+git clone https://github.com/Sneakamaila/musubi-enhanced.git
+cd musubi-enhanced
+docker compose up -d --build
+```
+Öffne anschließend im Browser: **`http://<DEINE-UNRAID-IP>:5151`**
 
 ---
 
-### Option 2: Unraid Docker Template (XML)
+### Update auf die neueste Version (v2.2.0):
 
-Kopiere die Vorlage [`unraid-musubi-enhanced.xml`](unraid-musubi-enhanced.xml) in dein Unraid-Flash-Laufwerk:
+Falls dein lokales Git-Repository auf Unraid abweicht (divergent branches), führe diesen Einzeiler aus:
+
 ```bash
-cp unraid-musubi-enhanced.xml /boot/config/plugins/dockerMan/templates-user/my-musubi-enhanced.xml
+cd /mnt/user/appdata/musubi-enhanced
+git fetch origin
+git reset --hard origin/main
+docker compose up -d --build
 ```
-Wähle in der Unraid Web-GUI unter **Docker** ➔ **Add Container** die Vorlage **musubi-enhanced** aus.
-
-#### Pfad-Zuweisungen (Volume Mappings):
-| Host-Pfad (Unraid) | Container-Pfad | Beschreibung |
-|---|---|---|
-| `/mnt/user/appdata/musubi/outputs` | `/app/outputs` | Speicherort der generierten MP4-Videos |
-| `/mnt/user/appdata/musubi/uploads` | `/app/uploads` | Zwischenspeicher für hochgeladene Bilder |
-| `/mnt/user/appdata/musubi/models`  | `/app/models`  | Zwischenspeicher für KI-Gewichte |
-| Port `5151` | `5151` | Web-Oberfläche |
 
 ---
 
@@ -86,27 +82,22 @@ Voraussetzungen: Python 3.10+, `ffmpeg`
 git clone https://github.com/Sneakamaila/musubi-enhanced.git
 cd musubi-enhanced
 pip install -r requirements.txt
-./start_studio.sh
+python3 musubi_web.py
 ```
-Öffne anschließend **`http://localhost:5151`** im Browser.
+Öffne **`http://localhost:5151`** im Browser.
 
 ---
 
 ## 🛠️ Verwendung
 
-### Grafische Web-Oberfläche (Web UI)
+### Web-Oberfläche:
 1. Foto per **Drag & Drop** in die Web-App ziehen.
-2. Vorschau der **KI-Tiefenkarte** und des **3D-Parallax-Effekts** prüfen.
-3. Modus wählen (*HLD-Card für echten Musubi*, *Simulierte Box* oder *Vollbild 9:16*).
-4. Kameraschwenk einstellen (Standard: 8 px / ~2.4° für HLD).
-5. Klick auf **"Musubi-Video erstellen"** – das fertige `.mp4` wird sofort gerendert und steht zum Download bereit.
+2. Vorschau prüfen (**KI-Tiefenkarte** & **3D-Vorschau**).
+3. Modus wählen (**HLD-Fotokarte** oder **3D-Hologramm**).
+4. Klick auf **"Musubi-Video erstellen"** – das flüssige `.mp4` wird gerendert und kann sofort abgespielt oder heruntergeladen werden.
 
-### CLI (Kommandozeile)
+### CLI (Kommandozeile):
 ```bash
-# Standardkonvertierung für echten Musubi:
-python3 musubi_cli.py foto.jpg -o video_musubi.mp4
-
-# Erweiterte Optionen:
 python3 musubi_cli.py foto.jpg \
   --mode hld_card \
   --sway 8.0 \
@@ -121,8 +112,8 @@ python3 musubi_cli.py foto.jpg \
 ## 📲 Video auf den Looking Glass Musubi übertragen
 
 1. Öffne die offizielle **Looking Glass Musubi App** auf deinem Computer.
-2. Ziehe die mit *Musubi 3D Studio* erstellte `.mp4`-Datei per Drag & Drop in die App.
-3. Verbinde den Musubi per USB-C-Kabel und synchronisiere die Medien auf das Gerät.
+2. Ziehe die generierte `.mp4`-Datei per Drag & Drop in die App.
+3. Musubi per USB-C verbinden und synchronisieren.
 
 ---
 

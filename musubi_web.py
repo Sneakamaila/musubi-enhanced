@@ -20,7 +20,7 @@ os.makedirs(UPLOADS_DIR, exist_ok=True)
 os.makedirs(OUTPUTS_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 
 converter = None
 
@@ -43,7 +43,7 @@ async def get_version():
     return {
         "version": f"v{__version__}",
         "app": "Musubi 3D Studio",
-        "engine": "Clean DIBR v2.0 (Continuous Z-Buffer)",
+        "engine": "Subpixel Bicubic DIBR v2.2.0 (CFR Pipeline)",
         "hld_compliant": True
     }
 

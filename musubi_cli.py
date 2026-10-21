@@ -19,9 +19,9 @@ def main():
     parser.add_argument("-o", "--output", default=None, help="Path to output MP4 video (default: <input>_musubi.mp4)")
     parser.add_argument(
         "--mode",
-        choices=["hld_card", "full", "simulated_box"],
+        choices=["hld_card", "hld_subject", "simulated_box", "full"],
         default="hld_card",
-        help="Presentation mode: hld_card (Pre-matted White for real Musubi frame), full (edge-to-edge 9:16), simulated_box (for PC preview)"
+        help="Presentation mode: hld_card (Floating card in White Alcove for Musubi), hld_subject (Isolated 3D hologram), simulated_box (for PC preview), full (Legacy 2D Vollbild)"
     )
     parser.add_argument("--sway", type=float, default=8.0, help="Parallax sway amount (default: 8.0, recommended 6.0-12.0 for HLD)")
     parser.add_argument("--axis", choices=["x", "circle", "figure8"], default="x", help="Camera motion axis: x (horizontal), circle, figure8")
