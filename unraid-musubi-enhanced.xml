@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>musubi-enhanced</Name>
-  <Version>2.2.0</Version>
+  <Version>2.2.1</Version>
   <Repository>sneakamaila/musubi-enhanced:latest</Repository>
   <Registry>https://github.com/Sneakamaila/musubi-enhanced</Registry>
   <Network>bridge</Network>
@@ -13,7 +13,7 @@
   <Category>MediaApp:Video MediaServer:Video Other:</Category>
   <WebUI>http://[IP]:[PORT:5151]</WebUI>
   <Icon>https://raw.githubusercontent.com/Sneakamaila/musubi-enhanced/main/static/icon.png</Icon>
-  <Description>Musubi 3D Studio v2.2.0 - 2D zu 3D Video Konverter fuer Looking Glass Musubi</Description>
+  <Description>Musubi 3D Studio v2.2.1 - 2D zu 3D Video Konverter fuer Looking Glass Musubi</Description>
   <Networking>
     <Mode>bridge</Mode>
     <Publish>

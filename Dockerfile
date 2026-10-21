@@ -1,10 +1,10 @@
 FROM python:3.11-slim-bookworm
 
 LABEL maintainer="Sneakamaila"
-LABEL version="2.2.0"
+LABEL version="2.2.1"
 LABEL description="Musubi 3D Studio - High-Fidelity 3D Video Generator for Looking Glass Musubi"
 
-ENV APP_VERSION=2.2.0
+ENV APP_VERSION=2.2.1
 
 # Install system dependencies (ffmpeg, libgl for opencv, curl for healthcheck)
 RUN apt-get update && apt-get install -y --no-install-recommends \

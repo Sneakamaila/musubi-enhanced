@@ -1,6 +1,6 @@
 # Musubi 3D Studio (musubi-enhanced) ❖
 
-[![Version](https://img.shields.io/badge/version-v2.2.0-emerald.svg)](https://github.com/Sneakamaila/musubi-enhanced)
+[![Version](https://img.shields.io/badge/version-v2.2.1-emerald.svg)](https://github.com/Sneakamaila/musubi-enhanced)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
 [![Unraid](https://img.shields.io/badge/Unraid-Compatible-orange.svg)](unraid-musubi-enhanced.xml)
 [![Python](https://img.shields.io/badge/Python-3.11+-green.svg)](https://python.org)
@@ -12,18 +12,14 @@ Entwickelt unter strikter Berücksichtigung der offiziellen [Looking Glass HLD D
 
 ---
 
-## 🔬 Was ist neu in v2.2.0?
+## 🔬 Was ist neu in v2.2.1?
 
-* **Subpixel Bicubic DIBR Engine (Zero Micro-Stutter):**  
-  Ersetzt diskretes Integer-Splatting durch subpixel-genaue, kontinuierliche Rückwärtsprojektion (`cv2.remap` mit `INTER_CUBIC`). Dadurch laufen Kameraschwenks in **30 FPS und 60 FPS vollkommen ruckelfrei und butterweich**.
-* **Guided Filter Depth-Snapping (Keine ausgefransten Ränder):**  
-  Durch einen Kaiming-He Guided-Filter werden die Tiefengrenzen der KI pixelgenau an den Kanten des Farbbildes verankert. Subjekt-Silhouetten (z. B. Mützen, Köpfe, Haare, Kleidung) bleiben rasiermesserscharf ohne Zähne oder Schereffekte.
-* **Layered Occlusion Inpainting (Einmaliger Pre-Pass):**  
-  Verdeckte Bereiche hinter Tiefenkanten werden vorab einmalig im 2D-Bild sauber rekonstruiert. Kein flackerndes Bild-für-Bild Inpainting mehr.
-* **Direkte FFmpeg CFR Pipe:**  
-  Frames werden direkt aus dem Speicher über eine Pipe mit hardwarepräzisem Constant Frame Rate (CFR) Zeitstempel an FFmpeg gestreamt.
-* **Neuer Modus: `hld_subject` (Freigestelltes 3D-Hologramm):**  
-  Das Hauptmotiv wird isoliert und schwebt wie ein echtes Hologramm mit Boden-Kontaktschatten im physischen Glaskasten.
+* **Fix für 3D-Hologramm (`hld_subject`):**  
+  Behebt den Bug, bei dem nur der Umriss (Drahtgitter) der Personen gezeichnet wurde. Motive werden nun vollflächig und solide mit Bodenschatten freigestellt.
+* **Nativer Transparenz-Support (PNG mit Alpha-Kanal):**  
+  Bilder mit vorhandener Transparenz (z. B. Sticker, iOS-Freisteller, Blender-Renders, Photoshop) werden nativ 1:1 als schwebende 3D-Hologramme ohne Segmentierungsverlust gerendert.
+* **Empfehlung für Standardfotos:**  
+  Für herkömmliche Fotos bleibt der Modus **`hld_card` (HLD-Fotokarte)** der offizielle, empfohlene Standard, um das gesamte Foto mitsamt Hintergrunddetails harmonisch im Glaskasten schweben zu lassen.
 
 ---
 
