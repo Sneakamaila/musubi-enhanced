@@ -45,7 +45,7 @@ Wenn du das Unraid-Plugin **Docker Compose Manager** nutzt:
    ```bash
    docker compose up -d --build
    ```
-3. Öffne im Browser: `http://<DEINE-UNRAID-IP>:8080`
+3. Öffne im Browser: `http://<DEINE-UNRAID-IP>:5151`
 
 ---
 
@@ -63,7 +63,7 @@ Gehe danach in der Unraid Web-GUI auf den Tab **Docker** ➔ **Add Container** �
 | `/mnt/user/appdata/musubi/outputs` | `/app/outputs` | Speicherort der generierten MP4-Videos |
 | `/mnt/user/appdata/musubi/uploads` | `/app/uploads` | Zwischenspeicher für hochgeladene Bilder |
 | `/mnt/user/appdata/musubi/models`  | `/app/models`  | Zwischenspeicher für KI-Gewichte |
-| Port `8080` | `8080` | Web-Oberfläche |
+| Port `5151` | `5151` | Web-Oberfläche |
 
 ---
 
@@ -73,7 +73,7 @@ docker build -t musubi-enhanced:latest .
 
 docker run -d \
   --name=musubi-enhanced \
-  -p 8080:8080 \
+  -p 5151:5151 \
   -v /mnt/user/appdata/musubi/outputs:/app/outputs \
   -v /mnt/user/appdata/musubi/uploads:/app/uploads \
   -v /mnt/user/appdata/musubi/models:/app/models \
@@ -98,7 +98,7 @@ pip install -r requirements.txt
 # 3. Web-Studio starten
 ./start_studio.sh
 ```
-Öffne anschließend **`http://localhost:8080`** im Browser.
+Öffne anschließend **`http://localhost:5151`** im Browser.
 
 ---
 

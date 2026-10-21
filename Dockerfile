@@ -34,12 +34,12 @@ VOLUME ["/app/outputs", "/app/uploads", "/app/models"]
 
 # Environment defaults
 ENV HOST=0.0.0.0
-ENV PORT=8080
+ENV PORT=5151
 ENV PYTHONUNBUFFERED=1
 
-EXPOSE 8080
+EXPOSE 5151
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+  CMD curl -f http://localhost:5151/health || exit 1
 
 CMD ["python3", "musubi_web.py"]

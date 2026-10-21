@@ -7,12 +7,12 @@ services:
     container_name: musubi-enhanced
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "5151:5151"
     volumes:
       - ./outputs:/app/outputs
       - ./uploads:/app/uploads
       - ./models:/app/models
     environment:
       - HOST=0.0.0.0
-      - PORT=8080
+      - PORT=5151
       - PYTHONUNBUFFERED=1
