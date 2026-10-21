@@ -5,27 +5,29 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-green.svg)](https://python.org)
 [![Looking Glass](https://img.shields.io/badge/Looking%20Glass-Musubi%207%22-purple.svg)](https://lookingglassfactory.com)
 
-Ein KI-gestütztes Tool und Web-Studio zur Umwandlung von 2D-Fotos in perfekte, lückenlos holografische 3D-Videos (`.mp4`) für den **Looking Glass Musubi** Bilderrahmen.
+**Musubi 3D Studio** ist eine moderne, KI-gestützte Komplettlösung zur Generierung von hochwertigen 3D-Parallax-Videos (`.mp4`) für den **Looking Glass Musubi** holografischen Bilderrahmen.
+
+Die Anwendung dient als leistungsstarke Alternative zur Standard-Software und ermöglicht die professionelle Aufbereitung von 2D-Fotos zu räumlichen 3D-Videoloops mit feiner Tiefenstaffelung und sauber rekonstruierten Bildinhalten.
 
 ---
 
-## 🔍 Das Problem: Warum hat die offizielle Software den weißen Fleck?
+## ✨ Features & Highlights
 
-In der offiziellen Looking Glass Musubi Companion-Software entsteht hinter freigestellten Personen (z. B. am Kopf/Hals) oft ein auffälliger weißer Fleck:
-
-1. **Fehlende Disocclusion-Rekonstruktion:**  
-   Beim 3D-Schwenk (z. B. 15° Y-Achse) bewegt sich der Vordergrund schneller als der Hintergrund. Die Bildteile des Meeres/Himmels, die im Originalfoto *hinter* der Person lagen, existieren im flachen 2D-Bild nicht. Die Standard-App füllt diesen verdeckten Bereich nicht auf, sondern lässt ein leeres Maskenloch.
-2. **"Background Color" ist auf Weiß gesetzt:**  
-   Im Einstellungs-Panel der Musubi-App steht die Option `Background Color` standardmäßig auf Weiß (`#FFFFFF`). Durch das verdeckte Loch scheint der weiße Hintergrund durch.
-3. **Zu starker Wiggle-Winkel:**  
-   Ein Schwenk von 15° ist für ein einzelnes 2D-Foto extrem groß und erzeugt riesige Okklusionslücken.
-
-### ✨ Was macht *Musubi 3D Studio* besser?
-* **Depth-Anything-V2 KI:** Berechnet gestochen scharfe Tiefenkarten mit präzisen Kanten um Haare, Schultern und Konturen.
-* **Disocclusion Inpainting:** Reconstructiert und malt den verdeckten Hintergrund (Meer, Wellen, Himmel) hinter Personen nahtlos weiter. **Keine weißen Flecken, keine Löcher, kein Rubber-Sheet-Tearing!**
-* **Harmonischer Sinus-Loop:** Die Kamera schwenkt vollkommen gleichmäßig in einer Dauerschleife (Start- und Endframe sind mathematisch identisch – null Ruckeln).
-* **Natives Musubi-Format:** 576 × 1024 Pixel (9:16 Portrait) als hochkompatibles H.264 MP4.
-* **Zwei Modi:** Vollbild (9:16 Immersiv) oder Musubi Diorama-Box (schwebende Fotokarte mit weichem Schattenwurf und Decken-Spotlight).
+* **Modernste KI-Tiefenschätzung (Depth-Anything-V2):**  
+  Berechnet detaillierte, metrisch stimmige Tiefenkarten mit präzisen Trennkanten um Personen, Haare und feine Konturen.
+* **Intelligentes Disocclusion Inpainting:**  
+  Bei Kameraschwenks verdeckte Bildbereiche werden im Hintergrund nahtlos und fotorealistisch rekonstruiert. Keine Löcher, kein Tearing und keine unschönen Kanten-Artefakte.
+* **Harmonische Sinus-Kamerabewegung (Nahtloser Loop):**  
+  Die virtuelle Kamera schwenkt entlang einer mathematischen Sinuskurve. Start- und Endframe sind exakt identisch, wodurch das Video auf dem Rahmen in einer perfekten, ruckelfreien Endlosschleife läuft.
+* **Wählbare Präsentations-Modi:**
+  - *Vollbild 9:16 (Immersiv):* Das Foto füllt das Display randlos aus – ideal für Landschafts- und Personenaufnahmen.
+  - *Musubi Diorama-Box:* Die Fotokarte schwebt mit weichem Schattenwurf und Decken-Spotlight in einem virtuellen 3D-Schattenkasten.
+* **Natives Musubi-Format:**  
+  Exportiert direkt als H.264 MP4 in 576 × 1024 Pixeln (9:16 Portrait) oder wahlweise Full HD (1080 × 1920) bei 30 oder 60 FPS.
+* **Intuitive Bedienung:**  
+  Moderne Web-Oberfläche mit Drag & Drop, Vorschau von Tiefenkarte und rekonstruiertem Hintergrund sowie ein CLI-Tool für die automatisierte Stapelverarbeitung.
+* **Cloud- & Server-Ready:**  
+  Vollständig vorkonfiguriert für **Docker** und **Unraid**.
 
 ---
 
@@ -35,29 +37,30 @@ In der offiziellen Looking Glass Musubi Companion-Software entsteht hinter freig
 
 Wenn du das Unraid-Plugin **Docker Compose Manager** nutzt:
 
-1. Klone das Repository in dein Appdata-Verzeichnis oder erstelle einen neuen Stack:
+1. Repository in dein Appdata-Verzeichnis klonen:
    ```bash
    cd /mnt/user/appdata
    git clone https://github.com/Sneakamaila/musubi-enhanced.git
    cd musubi-enhanced
    ```
-2. Starte den Container:
+2. Container starten:
    ```bash
    docker compose up -d --build
    ```
-3. Öffne im Browser: `http://<DEINE-UNRAID-IP>:5151`
+3. Im Browser öffnen:  
+   **`http://<DEINE-UNRAID-IP>:5151`**
 
 ---
 
 ### Option 2: Unraid Docker Template (XML)
 
-Kopiere die bereitgestellte Vorlage [`unraid-musubi-enhanced.xml`](unraid-musubi-enhanced.xml) in dein Unraid-Flash-Laufwerk:
+Kopiere die Vorlage [`unraid-musubi-enhanced.xml`](unraid-musubi-enhanced.xml) in dein Unraid-Flash-Laufwerk:
 ```bash
 cp unraid-musubi-enhanced.xml /boot/config/plugins/dockerMan/templates-user/my-musubi-enhanced.xml
 ```
 Gehe danach in der Unraid Web-GUI auf den Tab **Docker** ➔ **Add Container** ➔ wähle die Vorlage **musubi-enhanced** aus.
 
-#### Wichtige Pfad-Zuweisungen (Volume Mappings):
+#### Pfad-Zuweisungen (Volume Mappings):
 | Host-Pfad (Unraid) | Container-Pfad | Beschreibung |
 |---|---|---|
 | `/mnt/user/appdata/musubi/outputs` | `/app/outputs` | Speicherort der generierten MP4-Videos |
