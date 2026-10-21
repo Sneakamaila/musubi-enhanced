@@ -8,13 +8,14 @@ import argparse
 import sys
 import os
 import time
-from musubi_core import Musubi3DConverter
+from musubi_core import Musubi3DConverter, __version__
 
 def main():
     parser = argparse.ArgumentParser(
         description="Musubi 3D Video Converter: Turn 2D photos into holographic MP4 videos for Looking Glass Musubi."
     )
-    parser.add_argument("input", help="Path to input photo (JPG, PNG, WebP)")
+    parser.add_argument("-v", "--version", action="version", version=f"Musubi 3D Studio v{__version__} (HLD Architecture Compliant)")
+    parser.add_argument("input", nargs="?", help="Path to input photo (JPG, PNG, WebP)")
     parser.add_argument("-o", "--output", default=None, help="Path to output MP4 video (default: <input>_musubi.mp4)")
     parser.add_argument(
         "--mode",

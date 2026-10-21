@@ -19,6 +19,8 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
+__version__ = "2.1.0"
+
 MODEL_URL = "https://huggingface.co/yuvraj108c/Depth-Anything-2-Onnx/resolve/main/depth_anything_v2_vits.onnx"
 
 def download_progress(count, block_size, total_size):

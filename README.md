@@ -1,5 +1,6 @@
 # Musubi 3D Studio (musubi-enhanced) ❖
 
+[![Version](https://img.shields.io/badge/version-v2.1.0-emerald.svg)](https://github.com/Sneakamaila/musubi-enhanced)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
 [![Unraid](https://img.shields.io/badge/Unraid-Compatible-orange.svg)](unraid-musubi-enhanced.xml)
 [![Python](https://img.shields.io/badge/Python-3.11+-green.svg)](https://python.org)

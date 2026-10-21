@@ -15,4 +15,5 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=5151
+      - APP_VERSION=2.1.0
       - PYTHONUNBUFFERED=1

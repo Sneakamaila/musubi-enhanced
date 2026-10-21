@@ -20,6 +20,8 @@ os.makedirs(UPLOADS_DIR, exist_ok=True)
 os.makedirs(OUTPUTS_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
+__version__ = "2.1.0"
+
 converter = None
 
 def get_converter():
@@ -34,7 +36,16 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "app": "Musubi 3D Studio"}
+    return {"status": "ok", "app": "Musubi 3D Studio", "version": f"v{__version__}"}
+
+@app.get("/api/version")
+async def get_version():
+    return {
+        "version": f"v{__version__}",
+        "app": "Musubi 3D Studio",
+        "engine": "Clean DIBR v2.0 (Continuous Z-Buffer)",
+        "hld_compliant": True
+    }
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
